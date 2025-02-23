@@ -3,8 +3,14 @@ pragma solidity ^0.8.20;
 
 import "./interfaces/ICAFToken.sol";
 
-contract CAFToken is ICAFToken {
-    constructor(address initialOwner, uint256 initialSupply) Ownable(initialOwner) ERC20("CaFi", "CAF") {
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+
+contract CAFToken is ICAFToken, ERC20, Ownable {
+    constructor(
+        address initialOwner,
+        uint256 initialSupply
+    ) Ownable(initialOwner) ERC20("CaFi", "CAF") {
         _mint(msg.sender, initialSupply);
     }
 
