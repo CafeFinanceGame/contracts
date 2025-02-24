@@ -2,9 +2,15 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "../CosumableItem.sol";
 
 interface IERC721Company is IERC721Metadata {
     // ========================== ACTIONS ==========================
+    /// @notice Replenish the company's energy.
+    /// @dev Energy is used to perform actions in the game.
+    /// STORY
+    ///   - Players must replenish energy to keep operations running.
+    function replenishEnergy(ConsumableItem item) external;
 
     // =========================== STATE ===========================
 
