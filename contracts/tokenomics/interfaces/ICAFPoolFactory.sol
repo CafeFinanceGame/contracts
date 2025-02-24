@@ -11,8 +11,7 @@ interface ICAFPoolFactory {
 
     function getPool(
         address tokenA,
-        address tokenB,
-        uint24 fee
+        address tokenB
     ) external view returns (address pool);
 
     // IMMUTABLES
@@ -20,7 +19,6 @@ interface ICAFPoolFactory {
 
     // EVENTS
     event PoolCreated(
-        address indexed creator,
         address indexed tokenA,
         address indexed tokenB,
         uint24 fee,
