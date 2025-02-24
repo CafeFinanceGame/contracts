@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "../../libraries/PlayerLibrary.sol";
 import "../CosumableItem.sol";
 
 interface IERC721Company is IERC721Metadata {
@@ -13,6 +14,14 @@ interface IERC721Company is IERC721Metadata {
     function replenishEnergy(ConsumableItem item) external;
 
     // =========================== STATE ===========================
+    /// @notice Role of the company in the game.
+    /// @dev The role determines the company's abilities and restrictions.
+    /// STORY
+    ///   - Companies can be:
+    ///     - Coffee Company
+    ///     - Machine Company
+    ///     - Material Company
+    function role() external view returns (PlayerLibrary.PlayerRole);
 
     /// @notice The company's energy is used to perform actions in the game.
     /// @dev Energy consumption affects the company's ability to operate.
