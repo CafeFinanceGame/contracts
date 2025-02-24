@@ -9,60 +9,49 @@ interface ICAFPool {
 
     function tokenB() external view returns (address);
 
-    function minTokenAToSwap() external view returns (uint256);
+    function reserveA() external view returns (uint128);
 
-    function minTokenBToSwap() external view returns (uint256);
+    function reserveB() external view returns (uint128);
 
-    function maxTokenAToSwap() external view returns (uint256);
+    function fee() external view returns (uint24);
 
-    function maxTokenBToSwap() external view returns (uint256);
-
-    function fee() external view returns (uint256);
+    function liquidity(address) external view returns (uint128);
 
     // ACTIONS
     function initialize(address _tokenA, address _tokenB) external;
 
     function addLiquidity(
-        uint256 amountA,
-        uint256 amountB
-    ) external returns (uint256 liquidity);
+        uint128 amountA,
+        uint128 amountB
+    ) external returns (uint128);
 
     function removeLiquidity(
-        uint256 liquidity
-    ) external returns (uint256 amountA, uint256 amountB);
+        uint128 liquidity
+    ) external returns (uint128 amountA, uint128 amountB);
 
     function swap(
-        uint256 amountIn,
-        address tokenIn,
-        address tokenOut
-    ) external returns (uint256 amountOut);
+        uint128 amountIn,
+        address tokenIn
+    ) external returns (uint128 amountOut);
 
     // EVENTS
     event LiquidityAdded(
         address indexed provider,
-        uint256 amountA,
-        uint256 amountB,
-        uint256 liquidity
+        uint128 amountA,
+        uint128 amountB,
+        uint128 liquidity
     );
+
     event LiquidityRemoved(
         address indexed provider,
-        uint256 liquidity,
-        uint256 amountA,
-        uint256 amountB
+        uint128 amountA,
+        uint128 amountB,
+        uint128 liquidity
     );
     event Swap(
         address indexed trader,
-        uint256 amountIn,
+        uint128 amountIn,
         address tokenIn,
-        address tokenOut,
-        uint256 amountOut
+        uint128 amountOut
     );
-
-    // STATE
-    function getReserves()
-        external
-        view
-        returns (uint256 reserveA, uint256 reserveB);
-
-    function liquidity() external view returns (uint256);
 }
