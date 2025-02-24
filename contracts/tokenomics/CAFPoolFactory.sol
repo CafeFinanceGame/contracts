@@ -5,8 +5,7 @@ import "./interfaces/ICAFPoolFactory.sol";
 import "./CAFPool.sol";
 
 contract CAFPoolFactory is ICAFPoolFactory {
-    mapping(address => mapping(address => address))
-        public override getPool;
+    mapping(address => mapping(address => address)) public override getPool;
 
     function createPool(
         address tokenA,
@@ -15,7 +14,6 @@ contract CAFPoolFactory is ICAFPoolFactory {
     ) external override returns (address pool) {
         require(tokenA != tokenB, "Identical tokens");
         require(getPool[tokenA][tokenB] == address(0), "Pool already exists");
-        
 
         pool = address(new CAFPool(msg.sender));
         getPool[tokenA][tokenB] = pool;
