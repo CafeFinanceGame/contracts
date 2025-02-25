@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./Item.sol";
+import "./CAFItems.sol";
 import "./CAFProductItems.sol";
-import "./Companies.sol";
+import "./CAFCompanyItems.sol";
 
 contract ConsumableItem is Item {
     // ========================== STATES ==========================

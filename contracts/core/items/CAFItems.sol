@@ -2,7 +2,6 @@
 pragma solidity ^0.8.28;
 
 import "./interfaces/ICAFItems.sol";
+import {CAFModuleBase} from "../dependency/CAFModuleBase.sol";
 
-contract CAFItems is ICAFItems {
-    
-}
+abstract contract CAFItems is ICAFItems, CAFModuleBase {}

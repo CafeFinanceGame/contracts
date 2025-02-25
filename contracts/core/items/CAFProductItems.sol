@@ -3,15 +3,17 @@ pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "./interfaces/ICAFProductItems.sol";
+import "../dependency/ICAFContractRegistry.sol";
 import "../libraries/ItemLibrary.sol";
+import "../items/CAFCompanyItems.sol";
+import "../items/CAFItems.sol";
 
-contract CAFProductItems is ICAFProducts, ERC1155 {
+contract CAFProductItems is ICAFProducts, ERC1155, CAFItems {
     // ======================== PRODUCT ITEMS TYPE ===================================
 
     // Coffee Company
     uint256 public constant BLACK_COFFEE = uint256(keccak256("BLACK_COFFEE"));
-    uint256 public constant BLACK_SUGAR_COFFEE =
-        uint256(keccak256("BLACK_SUGAR_COFFEE"));
+    uint256 public constant SUGAR_COFFEE = uint256(keccak256("SUGAR_COFFEE"));
     uint256 public constant ESPRESSO = uint256(keccak256("ESPRESSO"));
     uint256 public constant MILK_COFFEE = uint256(keccak256("MILK_COFFEE"));
 
@@ -28,12 +30,22 @@ contract CAFProductItems is ICAFProducts, ERC1155 {
     uint256 public constant MILK_FROTHER = uint256(keccak256("MILK_FROTHER"));
 
     // ============================== STATES =========================================
+    address public companyItemsAddress;
 
     constructor() ERC1155("https://game.example/api/item/{id}.json") {
+        companyItemsAddress = ICAFContractRegistry(msg.sender)
+            .getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_COMPANY_ITEMS_CONTRACT
+                )
+            );
+
         uint8 initialSupply = 0;
 
         _mint(msg.sender, BLACK_COFFEE, initialSupply, "");
-        _mint(msg.sender, BLACK_SUGAR_COFFEE, initialSupply, "");
+        _mint(msg.sender, SUGAR_COFFEE, initialSupply, "");
         _mint(msg.sender, ESPRESSO, initialSupply, "");
         _mint(msg.sender, MILK_COFFEE, initialSupply, "");
 
@@ -48,53 +60,40 @@ contract CAFProductItems is ICAFProducts, ERC1155 {
         _mint(msg.sender, MILK_FROTHER, initialSupply, "");
     }
 
-    function balanceOf(
-        address owner
-    ) external view override returns (uint256 balance) {}
-
-    function ownerOf(
-        uint256 tokenId
-    ) external view override returns (address owner) {}
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external override {}
-
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external override {}
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external override {}
-
-    function approve(address to, uint256 tokenId) external override {}
-
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    ) public override(ERC1155, IERC721) {}
-
-    function getApproved(
-        uint256 tokenId
-    ) external view override returns (address operator) {}
-
-    function isApprovedForAll(
-        address owner,
-        address operator
-    ) public view override(ERC1155, IERC721) returns (bool) {}
-
     function create(
         address _owner,
-        bytes32 _type
-    ) external override returns (uint256) {}
+        uint256 _type
+    ) external override returns (uint128) {
+        require(
+            _type == keccak256("BLACK_COFFEE") ||
+                _type == keccak256("SUGAR_COFFEE") ||
+                _type == keccak256("ESPRESSO") ||
+                _type == keccak256("MILK_COFFEE") ||
+                _type == keccak256("COFFEE_BEAN") ||
+                _type == keccak256("MILK") ||
+                _type == keccak256("SUGAR") ||
+                _type == keccak256("WATER") ||
+                _type == keccak256("GRINDER") ||
+                _type == keccak256("KETTLE") ||
+                _type == keccak256("MOKA_POT") ||
+                _type == keccak256("MILK_FROTHER"),
+            "ProductItems: invalid type"
+        );
 
-    function remove(uint256 _id) external override {}
+        require(
+            CAFCompanyItems(companyItemsAddress).isCompany(_owner),
+            "ProductItems: owner not found"
+        );
+
+        uint128 id = uint128(_type);
+        _mint(_owner, id, 1, "");
+
+        return id;
+    }
+
+    function remove(uint128 _id) external override {}
+
+    function isExist(uint128 _id) external view override returns (bool) {
+        return balanceOf(msg.sender, _id) > 0;
+    }
 }

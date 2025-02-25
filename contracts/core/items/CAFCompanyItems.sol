@@ -2,15 +2,15 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "../items/interfaces/ICompanyItem.sol";
+import "../items/interfaces/ICAFCompanyItems.sol";
 import "../../core/libraries/PlayerLibrary.sol";
 
-contract Companies is ICompanyItem, ERC721URIStorage {
+contract CAFCompanyItems is ICAFCompanyItems, ERC721URIStorage {
     struct Company {
         PlayerLibrary.PlayerRole role;
         uint8 energy;
-        uint256 capitalization;
-        uint256 revenue;
+        uint128 capitalization;
+        uint128 revenue;
         int256 profit;
     }
 
