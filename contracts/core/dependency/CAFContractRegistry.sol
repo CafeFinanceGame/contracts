@@ -3,8 +3,13 @@ pragma solidity ^0.8.28;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ICAFContractRegistry} from "./ICAFContractRegistry.sol";
+import {CAFAccessControl} from "./CAFAccessControl.sol";
 
-contract CAFContractRegistry is Ownable, ICAFContractRegistry {
+contract CAFContractRegistry is
+    Ownable,
+    ICAFContractRegistry,
+    CAFAccessControl
+{
     // ======================== Contracts Type ========================
     // uint256 public constant CAF_MARKETPLACE_CONTRACT =
     //     keccak256("CAF_MARKETPLACE_CONTRACT");
@@ -18,7 +23,7 @@ contract CAFContractRegistry is Ownable, ICAFContractRegistry {
     // ======================== Storage ========================
     mapping(uint256 => address) private contracts;
 
-    constructor() Ownable(msg.sender) {}
+    constructor() Ownable(msg.sender) CAFAccessControl(address(this)) {}
 
     // ======================== Functions ========================
     function getContractAddress(
@@ -37,10 +42,13 @@ contract CAFContractRegistry is Ownable, ICAFContractRegistry {
         );
 
         require(
-                contractType == uint256(ContractRegistryType.CAF_POOL_CONTRACT) ||
-                contractType == uint256(ContractRegistryType.CAF_MATERIAL_ITEMS_CONTRACT) ||
-                contractType == uint256(ContractRegistryType.CAF_PRODUCT_ITEMS_CONTRACT) ||
-                contractType == uint256(ContractRegistryType.CAF_MACHINE_ITEMS_CONTRACT)
+            contractType == uint256(ContractRegistryType.CAF_POOL_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_MATERIAL_ITEMS_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_PRODUCT_ITEMS_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_MACHINE_ITEMS_CONTRACT)
         );
 
         contracts[contractType] = contractAddress;

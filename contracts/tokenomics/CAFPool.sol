@@ -12,13 +12,13 @@ contract CAFPool is ICAFPool {
     /// @inheritdoc ICAFPool
     address public override tokenB;
     /// @inheritdoc ICAFPool
-    uint128 public override reserveA;
+    uint256 public override reserveA;
     /// @inheritdoc ICAFPool
-    uint128 public override reserveB;
+    uint256 public override reserveB;
     /// @inheritdoc ICAFPool
     uint24 public immutable override fee;
     /// @inheritdoc ICAFPool
-    mapping(address => uint128) public override liquidity;
+    mapping(address => uint256) public override liquidity;
 
     constructor(address _factory) {
         factory = _factory;
@@ -34,9 +34,9 @@ contract CAFPool is ICAFPool {
     }
 
     function addLiquidity(
-        uint128 amountA,
-        uint128 amountB
-    ) external override returns (uint128 mintedLiquidity) {
+        uint256 amountA,
+        uint256 amountB
+    ) external override returns (uint256 mintedLiquidity) {
         IERC20(tokenA).transferFrom(msg.sender, address(this), amountA);
         IERC20(tokenB).transferFrom(msg.sender, address(this), amountB);
 
@@ -50,8 +50,8 @@ contract CAFPool is ICAFPool {
     }
 
     function removeLiquidity(
-        uint128 _liquidity
-    ) external override returns (uint128 amountA, uint128 amountB) {
+        uint256 _liquidity
+    ) external override returns (uint256 amountA, uint256 amountB) {
         require(liquidity[msg.sender] >= _liquidity, "Not enough liquidity");
 
         amountA = (_liquidity * reserveA) / liquidity[msg.sender];
@@ -68,17 +68,17 @@ contract CAFPool is ICAFPool {
     }
 
     function swap(
-        uint128 amountIn,
+        uint256 amountIn,
         address tokenIn
-    ) external override returns (uint128 amountOut) {
+    ) external override returns (uint256 amountOut) {
         require(amountIn > 0, "Invalid amount");
         require(tokenIn == tokenA || tokenIn == tokenB, "Invalid token");
 
         address tokenOut = (tokenIn == tokenA) ? tokenB : tokenA;
-        uint128 reserveIn = (tokenIn == tokenA) ? reserveA : reserveB;
-        uint128 reserveOut = (tokenOut == tokenA) ? reserveA : reserveB;
+        uint256 reserveIn = (tokenIn == tokenA) ? reserveA : reserveB;
+        uint256 reserveOut = (tokenOut == tokenA) ? reserveA : reserveB;
 
-        uint128 amountInWithFee = (amountIn * (10000 - fee)) / 10000;
+        uint256 amountInWithFee = (amountIn * (10000 - fee)) / 10000;
         amountOut =
             (amountInWithFee * reserveOut) /
             (reserveIn + amountInWithFee);

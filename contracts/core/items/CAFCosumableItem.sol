@@ -5,7 +5,7 @@ import "./CAFItems.sol";
 import "./CAFProductItems.sol";
 import "./CAFCompanyItems.sol";
 
-contract ConsumableItem is Item {
+abstract contract CAFConsumableItems is CAFItems {
     // ========================== STATES ==========================
     /// @notice Available energy of the consumable item
     /// STORY
@@ -15,10 +15,13 @@ contract ConsumableItem is Item {
     // ========================== ACTIONS ==========================
     /// @notice Consume the item
     /// @dev The player can consume the item to get energy.
-    function consume(address company) external {
-        require(
-            Company(company) != Company(address(0)),
-            "Item: company not found"
-        );
+    function consume() external {
+        require(energy > 0, "CAFConsumableItems: no energy to consume");
+        energy = 0;
+
+        emit Consumed(msg.sender, address(this));
     }
+
+    // ========================== EVENTS ==========================
+    event Consumed(address indexed player, address indexed item);
 }

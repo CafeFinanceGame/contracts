@@ -5,7 +5,7 @@ library ItemLibrary {
     struct Item {
         address owner;
         ItemType itemType;
-        uint128 amount;
+        uint256 amount;
     }
 
     enum ItemType {

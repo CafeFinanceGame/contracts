@@ -9,49 +9,49 @@ interface ICAFPool {
 
     function tokenB() external view returns (address);
 
-    function reserveA() external view returns (uint128);
+    function reserveA() external view returns (uint256);
 
-    function reserveB() external view returns (uint128);
+    function reserveB() external view returns (uint256);
 
     function fee() external view returns (uint24);
 
-    function liquidity(address) external view returns (uint128);
+    function liquidity(address) external view returns (uint256);
 
     // ACTIONS
     function initialize(address _tokenA, address _tokenB) external;
 
     function addLiquidity(
-        uint128 amountA,
-        uint128 amountB
-    ) external returns (uint128);
+        uint256 amountA,
+        uint256 amountB
+    ) external returns (uint256);
 
     function removeLiquidity(
-        uint128 liquidity
-    ) external returns (uint128 amountA, uint128 amountB);
+        uint256 liquidity
+    ) external returns (uint256 amountA, uint256 amountB);
 
     function swap(
-        uint128 amountIn,
+        uint256 amountIn,
         address tokenIn
-    ) external returns (uint128 amountOut);
+    ) external returns (uint256 amountOut);
 
     // EVENTS
     event LiquidityAdded(
         address indexed provider,
-        uint128 amountA,
-        uint128 amountB,
-        uint128 liquidity
+        uint256 amountA,
+        uint256 amountB,
+        uint256 liquidity
     );
 
     event LiquidityRemoved(
         address indexed provider,
-        uint128 amountA,
-        uint128 amountB,
-        uint128 liquidity
+        uint256 amountA,
+        uint256 amountB,
+        uint256 liquidity
     );
     event Swap(
         address indexed trader,
-        uint128 amountIn,
+        uint256 amountIn,
         address tokenIn,
-        uint128 amountOut
+        uint256 amountOut
     );
 }

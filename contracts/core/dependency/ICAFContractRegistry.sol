@@ -5,6 +5,7 @@ interface ICAFContractRegistry {
     enum ContractRegistryType {
         CAF_MARKETPLACE_CONTRACT,
         CAF_POOL_CONTRACT,
+        CAF_COMPANY_ITEMS_CONTRACT,
         CAF_MATERIAL_ITEMS_CONTRACT,
         CAF_PRODUCT_ITEMS_CONTRACT,
         CAF_MACHINE_ITEMS_CONTRACT
