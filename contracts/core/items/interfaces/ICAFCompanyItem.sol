@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "../../libraries/PlayerLibrary.sol";
 import "../CosumableItem.sol";
+import "./ICAFItems.sol";
 
-interface IERC721Company is IERC721Metadata {
+interface ICompanyItem is ICAFItems {}
     // ========================== ACTIONS ==========================
     /// @notice Replenish the company's energy.
     /// @dev Energy is used to perform actions in the game.

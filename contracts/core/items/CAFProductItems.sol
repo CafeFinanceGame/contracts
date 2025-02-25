@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^.8 .2;
+pragma solidity ^0.8.28;
 
-import "./interfaces/IERC1155Product.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "./interfaces/ICAFProductItems.sol";
+import "../libraries/ItemLibrary.sol";
 
-contract ProductItem is IERC1155Product {
+contract CAFProductItems is ICAFProducts, ERC1155 {
     // ======================== PRODUCT ITEMS TYPE ===================================
 
     // Coffee Company
@@ -46,43 +48,53 @@ contract ProductItem is IERC1155Product {
         _mint(msg.sender, MILK_FROTHER, initialSupply, "");
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) external view override returns (bool) {}
-
     function balanceOf(
-        address account,
-        uint256 id
-    ) external view override returns (uint256) {}
+        address owner
+    ) external view override returns (uint256 balance) {}
 
-    function balanceOfBatch(
-        address[] calldata accounts,
-        uint256[] calldata ids
-    ) external view override returns (uint256[] memory) {}
-
-    function setApprovalForAll(
-        address operator,
-        bool approved
-    ) external override {}
-
-    function isApprovedForAll(
-        address account,
-        address operator
-    ) external view override returns (bool) {}
+    function ownerOf(
+        uint256 tokenId
+    ) external view override returns (address owner) {}
 
     function safeTransferFrom(
         address from,
         address to,
-        uint256 id,
-        uint256 value,
+        uint256 tokenId,
         bytes calldata data
     ) external override {}
 
-    function safeBatchTransferFrom(
+    function safeTransferFrom(
         address from,
         address to,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
+        uint256 tokenId
     ) external override {}
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external override {}
+
+    function approve(address to, uint256 tokenId) external override {}
+
+    function setApprovalForAll(
+        address operator,
+        bool approved
+    ) public override(ERC1155, IERC721) {}
+
+    function getApproved(
+        uint256 tokenId
+    ) external view override returns (address operator) {}
+
+    function isApprovedForAll(
+        address owner,
+        address operator
+    ) public view override(ERC1155, IERC721) returns (bool) {}
+
+    function create(
+        address _owner,
+        bytes32 _type
+    ) external override returns (uint256) {}
+
+    function remove(uint256 _id) external override {}
 }
