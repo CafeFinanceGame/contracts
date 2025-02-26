@@ -2,50 +2,42 @@
 pragma solidity ^0.8.28;
 
 import "./CAFItems.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-abstract contract CAFDecayableItem is CAFItems, ERC721Burnable {
+abstract contract CAFDecayableItems is CAFItems {
+    struct CAFDecayableItem {
+        uint8 decayRate;
+        uint256 decayPeriod;
+        uint256 lastDecayTime;
+    }
     // ========================== STATES ==========================
-    /// @notice The decay rate of the item
-    /// STORY
-    /// - The decay rate of the item is the amount of energy that the item will lose after each decay period.
-    uint8 public decayRate;
 
-    /// @notice The decay period of the item
-    /// STORY
-    /// - The decay period of the item is the amount of time that the item will lose energy after.
-    uint256 public decayPeriod;
-
-    /// @notice The last decay time of the item
-    /// STORY
-    /// - The last decay time of the item is the time that the item was last decayed.
-    uint256 public lastDecayTime;
+    mapping(uint256 => CAFDecayableItem) public decayableItems;
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(AccessControl, ERC721) returns (bool) {
+    ) public view virtual override(AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
-    constructor(uint8 _decayRate, uint256 _decayPeriod) {
-        decayRate = _decayRate;
-        decayPeriod = _decayPeriod;
-        lastDecayTime = block.timestamp;
-    }
+    constructor(address _contractRegistry) CAFItems(_contractRegistry) {}
     // ========================== ACTIONS ==========================
     /// @notice Calculate the decay of the item
     /// @dev The item will lose energy after each decay period.
-    function calculateDecay() public view returns (uint8) {
-        uint256 _elapsedTime = block.timestamp - lastDecayTime;
-        uint256 _decayCount = _elapsedTime / decayPeriod;
+    /// @param _itemId The item id
+    /// @return The amount of sth that the item will lose
+    function calculateDecay(uint256 _itemId) internal view returns (uint256) {
+        CAFDecayableItem storage item = decayableItems[_itemId];
+        uint256 timePassed = block.timestamp - item.lastDecayTime;
+        uint256 decayCount = timePassed / item.decayPeriod;
 
-        return uint8(_decayCount * decayRate);
+        return item.decayRate * decayCount;
     }
 
     /// @notice Decay the item
     /// @dev The item will lose energy after each decay period.
-    function decay() external virtual;
+    /// @param _itemId The item id
+    function decay(uint256 _itemId) internal virtual returns (uint256);
 
     // ========================== EVENTS ==========================
 

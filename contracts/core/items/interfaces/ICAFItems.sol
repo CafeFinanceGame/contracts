@@ -5,12 +5,12 @@ interface ICAFItems {
     // ========================== ACTIONS ==========================
 
     /// @notice Create a new item
-    /// @param _owner The owner of the item
+    /// @param _companyId The id of the company
     /// @param _type The type of the item
     /// @param _uri The uri of the item, include the metadata of the item
     /// @return The id of the item
     function create(
-        address _owner,
+        uint256 _companyId,
         uint256 _type,
         string calldata _uri
     ) external returns (uint256);
