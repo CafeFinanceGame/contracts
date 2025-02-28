@@ -9,10 +9,27 @@ library ItemLibrary {
     }
 
     enum ItemType {
-        MATERIAL,
         UTILITY,
         PRODUCT,
         EVENT
+    }
+
+    enum ProductItemType {
+        // Coffee Company
+        BLACK_COFFEE,
+        SUGAR_COFFEE,
+        ESPRESSO,
+        MILK_COFFEE,
+        // Material Company
+        COFFEE_BEAN,
+        MILK,
+        SUGAR,
+        WATER,
+        // Machine Company
+        GRINDER,
+        KETTLE,
+        MOKA_POT,
+        MILK_FROTHER
     }
 
     function getUint8Type(ItemType itemType) internal pure returns (uint8) {

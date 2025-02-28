@@ -5,12 +5,19 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import "../items/interfaces/ICAFCompanyItems.sol";
+import {CAFItems} from "../items/CAFItems.sol";
+import {ICAFCompanyItems} from "../interfaces/ICAFCompanyItems.sol";
+import {ICAFProductItems} from "../interfaces/ICAFProductItems.sol";
+
 import "../../core/libraries/PlayerLibrary.sol";
-import "../items/CAFItems.sol";
 import "../libraries/ControlLibrary.sol";
 
-contract CAFCompanyItems is ICAFCompanyItems, ERC721URIStorage, CAFItems {
+contract CAFCompanyItems is
+    ICAFCompanyItems,
+    CAFItems,
+    ERC721,
+    ERC721URIStorage
+{
     struct Company {
         PlayerLibrary.PlayerRole role;
         uint8 energy;

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ICAFContractRegistry} from "./ICAFContractRegistry.sol";
+import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
 import {CAFAccessControl} from "./CAFAccessControl.sol";
 
 contract CAFContractRegistry is
@@ -43,6 +43,10 @@ contract CAFContractRegistry is
 
         require(
             contractType == uint256(ContractRegistryType.CAF_POOL_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_GAME_MANAGER_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_GAME_ECONOMY_CONTRACT) ||
                 contractType ==
                 uint256(ContractRegistryType.CAF_MATERIAL_ITEMS_CONTRACT) ||
                 contractType ==

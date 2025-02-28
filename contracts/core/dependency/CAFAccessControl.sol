@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import {ICAFContractRegistry} from "./ICAFContractRegistry.sol";
+import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
 import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 import {CAFModuleBase} from "./CAFModuleBase.sol";
 
