@@ -29,7 +29,6 @@ interface ICAFProductItems {
         uint256 freightPrice;
     }
 
-    // ========================== STATE ==========================
     // ========================== ACTIONS ==========================
     /// @notice Create a new item
     /// @param _companyId The id of the company
@@ -41,6 +40,11 @@ interface ICAFProductItems {
         ItemLibrary.ProductItemType _type,
         string calldata _uri
     ) external returns (uint256);
+
+    /// @notice Get the info of the item
+    /// @param _id The id of the item
+    /// @return The info of the item
+    function get(uint256 _id) external view returns (ProductItem memory);
 
     // ========================== EVENTS ==========================
     event ProductItemCreated(

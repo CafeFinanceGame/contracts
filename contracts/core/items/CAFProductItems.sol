@@ -6,15 +6,17 @@ import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {ERC1155URIStorage} from "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ICAFGameEconomy} from "../interfaces/ICAFGameEconomy.sol";
-import "../interfaces/ICAFProductItems.sol";
-import "../interfaces/ICAFContractRegistry.sol";
-import "../libraries/ItemLibrary.sol";
-import "../items/CAFCompanyItems.sol";
+import {ICAFProductItems} from "../interfaces/ICAFProductItems.sol";
+import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
+import {ICAFConsumableItems} from "../interfaces/ICAFConsumableItems.sol";
+import {ItemLibrary} from "../libraries/ItemLibrary.sol";
+import {ICAFCompanyItems} from "../interfaces/ICAFCompanyItems.sol";
 import {CAFDecayableItems} from "../items/CAFDecayableItems.sol";
+import {CAFItems} from "../items/CAFItems.sol";
 
 contract CAFProductItems is
     ICAFProductItems,
-    ERC1155,
+    ICAFConsumableItems,
     ERC1155Burnable,
     CAFDecayableItems
 {
@@ -34,16 +36,13 @@ contract CAFProductItems is
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC1155, CAFDecayableItems) returns (bool) {
+    ) public view override(ERC1155, CAFItems) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
     constructor(
         address _contractRegistry
-    )
-        CAFDecayableItem(_contractRegistry)
-        ERC1155("https://game.example/api/item/{id}.json")
-    {
+    ) ERC1155("") CAFDecayableItems(_contractRegistry) {
         _companyItemsAddress = ICAFContractRegistry(_contractRegistry)
             .getContractAddress(
                 uint256(
@@ -53,7 +52,7 @@ contract CAFProductItems is
                 )
             );
 
-        _gameEconomy = CAFGameEconomy(
+        _gameEconomy = ICAFGameEconomy(
             ICAFContractRegistry(_contractRegistry).getContractAddress(
                 uint256(
                     ICAFContractRegistry
@@ -63,6 +62,7 @@ contract CAFProductItems is
             )
         );
     }
+
     // ============================== MODIFIER =========================================
 
     modifier isNotExpired(uint256 _itemId) {
@@ -89,22 +89,28 @@ contract CAFProductItems is
 
     function create(
         uint256 _companyId,
-        ProductItemType _type,
+        ItemLibrary.ProductItemType _type,
         string memory _uri
     ) external override onlyRole(SYSTEM_ROLE) returns (uint256) {
         require(
-            _type == ProductItemType.BLACK_COFFEE ||
-                _type == ProductItemType.SUGAR_COFFEE ||
-                _type == ProductItemType.ESPRESSO ||
-                _type == ProductItemType.MILK_COFFEE ||
-                _type == ProductItemType.COFFEE_BEAN ||
-                _type == ProductItemType.MILK ||
-                _type == ProductItemType.SUGAR ||
-                _type == ProductItemType.WATER ||
-                _type == ProductItemType.GRINDER ||
-                _type == ProductItemType.KETTLE ||
-                _type == ProductItemType.MOKA_POT ||
-                _type == ProductItemType.MILK_FROTHER,
+            ICAFCompanyItems(_companyItemsAddress).get(_companyId).owner !=
+                address(0),
+            "ProductItems: company does not exist"
+        );
+
+        require(
+            _type == ItemLibrary.ProductItemType.BLACK_COFFEE ||
+                _type == ItemLibrary.ProductItemType.SUGAR_COFFEE ||
+                _type == ItemLibrary.ProductItemType.ESPRESSO ||
+                _type == ItemLibrary.ProductItemType.MILK_COFFEE ||
+                _type == ItemLibrary.ProductItemType.COFFEE_BEAN ||
+                _type == ItemLibrary.ProductItemType.MILK ||
+                _type == ItemLibrary.ProductItemType.SUGAR ||
+                _type == ItemLibrary.ProductItemType.WATER ||
+                _type == ItemLibrary.ProductItemType.GRINDER ||
+                _type == ItemLibrary.ProductItemType.KETTLE ||
+                _type == ItemLibrary.ProductItemType.MOKA_POT ||
+                _type == ItemLibrary.ProductItemType.MILK_FROTHER,
             "ProductItems: invalid type"
         );
 
@@ -113,11 +119,6 @@ contract CAFProductItems is
         );
 
         ProductItem memory item = productItems[id];
-        item.productType = ProductItemType(_type);
-        item.energy = _gameEconomy.getProductEconomy(_type).energy;
-        item.durability = _gameEconomy.getProductEconomy(_type).durability;
-        item.decayRate = _gameEconomy.getProductEconomy(_type).decayRate;
-        item.decayPeriod = _gameEconomy.getProductEconomy(_type).decayPeriod;
         item.lastDecayTime = block.timestamp;
 
         productItems[id] = item;
@@ -125,6 +126,12 @@ contract CAFProductItems is
         _mint(msg.sender, id, 1, "");
 
         return id;
+    }
+
+    function get(
+        uint256 _id
+    ) external view override returns (ProductItem memory) {
+        return productItems[_id];
     }
 
     function remove(uint256 _id) external override {
@@ -148,5 +155,16 @@ contract CAFProductItems is
         item.lastDecayTime += decayCount * item.decayPeriod;
 
         return decayAmount;
+    }
+
+    function consume(uint256 _itemId) external override isNotExpired(_itemId) {
+        require(
+            balanceOf(msg.sender, _itemId) >= 1,
+            "ProductItems: insufficient balance"
+        );
+
+        productItems[_itemId].energy = 0;
+
+        emit Consumed(_itemId);
     }
 }

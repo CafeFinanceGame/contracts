@@ -14,12 +14,6 @@ abstract contract CAFDecayableItems is CAFItems {
 
     mapping(uint256 => CAFDecayableItem) public decayableItems;
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual override(AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
     constructor(address _contractRegistry) CAFItems(_contractRegistry) {}
     // ========================== ACTIONS ==========================
     /// @notice Calculate the decay of the item

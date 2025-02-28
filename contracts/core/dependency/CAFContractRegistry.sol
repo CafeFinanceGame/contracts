@@ -10,22 +10,12 @@ contract CAFContractRegistry is
     ICAFContractRegistry,
     CAFAccessControl
 {
-    // ======================== Contracts Type ========================
-    // uint256 public constant CAF_MARKETPLACE_CONTRACT =
-    //     keccak256("CAF_MARKETPLACE_CONTRACT");
-    // uint256 public constant CAF_POOL_CONTRACT =
-    //     keccak256("CAF_POOL_CONTRACT");
-    // uint256 public constant CAF_MATERIAL_ITEMS_CONTRACT =
-    //     keccak256("CAF_MATERIAL_ITEMS_CONTRACT");
-    // uint256 public constant CAF_MACHINE_ITEMS_CONTRACT =
-    //     keccak256("CAF_MACHINE_ITEMS_CONTRACT");
-
-    // ======================== Storage ========================
+    // ======================== STATE ========================
     mapping(uint256 => address) private contracts;
 
     constructor() Ownable(msg.sender) CAFAccessControl(address(this)) {}
 
-    // ======================== Functions ========================
+    // ======================== ACTIONS ========================
     function getContractAddress(
         uint256 contractType
     ) external view override returns (address) {
@@ -48,11 +38,9 @@ contract CAFContractRegistry is
                 contractType ==
                 uint256(ContractRegistryType.CAF_GAME_ECONOMY_CONTRACT) ||
                 contractType ==
-                uint256(ContractRegistryType.CAF_MATERIAL_ITEMS_CONTRACT) ||
-                contractType ==
                 uint256(ContractRegistryType.CAF_PRODUCT_ITEMS_CONTRACT) ||
                 contractType ==
-                uint256(ContractRegistryType.CAF_MACHINE_ITEMS_CONTRACT)
+                uint256(ContractRegistryType.CAF_COMPANY_ITEMS_CONTRACT)
         );
 
         contracts[contractType] = contractAddress;

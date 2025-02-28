@@ -17,7 +17,7 @@ interface ICAFPool {
 
     function liquidity(address) external view returns (uint256);
 
-    // ACTIONS
+    // ========================== ACTIONS ==========================
     function initialize(address _tokenA, address _tokenB) external;
 
     function addLiquidity(
@@ -34,7 +34,7 @@ interface ICAFPool {
         address tokenIn
     ) external returns (uint256 amountOut);
 
-    // EVENTS
+    // ========================== EVENTS ==========================
     event LiquidityAdded(
         address indexed provider,
         uint256 amountA,
@@ -48,6 +48,7 @@ interface ICAFPool {
         uint256 amountB,
         uint256 liquidity
     );
+
     event Swap(
         address indexed trader,
         uint256 amountIn,

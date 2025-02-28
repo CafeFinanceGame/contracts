@@ -3,11 +3,10 @@ pragma solidity ^0.8.28;
 
 import {ICAFEventItems} from "../interfaces/ICAFEventItems.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {CAFItems} from "../items/CAFItems.sol";
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
-contract CAFEventItems is ICAFEventItems, ERC1155, CAFItems {
+contract CAFEventItems is ICAFEventItems, CAFItems {
     /*
     ============================ 🌍 GAME STORY: EVENTS ============================
     ======================= 📌 All Possible Parameters of a Event =======================
@@ -28,12 +27,6 @@ contract CAFEventItems is ICAFEventItems, ERC1155, CAFItems {
 
     mapping(uint256 => EventItem) public events;
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC1155, AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
     constructor(
         address _contractRegistry
     )
@@ -44,20 +37,13 @@ contract CAFEventItems is ICAFEventItems, ERC1155, CAFItems {
     function create(
         EventItemType _type,
         uint256 _startDate,
-        uint256 _endDate,
-        string calldata _uri
+        uint256 _endDate
     ) external override onlyRole(SYSTEM_ROLE) returns (uint256) {
         require(_startDate < _endDate, "CAFEventItems: Invalid date range");
 
         uint256 _eventId = uint256(
             keccak256(
-                abi.encodePacked(
-                    _type,
-                    _startDate,
-                    _endDate,
-                    _uri,
-                    block.timestamp
-                )
+                abi.encodePacked(_type, _startDate, _endDate, block.timestamp)
             )
         );
 
@@ -66,21 +52,23 @@ contract CAFEventItems is ICAFEventItems, ERC1155, CAFItems {
         events[_eventId] = EventItem({
             startDate: _startDate,
             endDate: _endDate,
-            eventType: uint256(_type),
-            metadata: _uri
+            eventType: uint256(_type)
         });
 
-        emit EventItemCreated(
-            _eventId,
-            uint256(_type),
-            _startDate,
-            _endDate,
-            _uri
-        );
+        emit EventItemCreated(_eventId, uint256(_type), _startDate, _endDate);
 
         return _eventId;
     }
 
+    function get(
+        uint256 _eventId
+    ) external view override returns (EventItem memory) {
+        return events[_eventId];
+    }
+
+    function remove(uint256 _eventId) external override {
+        _burn(msg.sender, _eventId, 1);
+    }
     function start(uint256 _eventId) external override onlyRole(SYSTEM_ROLE) {
         require(
             balanceOf(msg.sender, _eventId) > 0,

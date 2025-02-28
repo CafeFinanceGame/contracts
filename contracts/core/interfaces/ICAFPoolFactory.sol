@@ -2,7 +2,10 @@
 pragma solidity ^0.8.28;
 
 interface ICAFPoolFactory {
-    // ACTIONS
+    // ========================== STATE ==========================
+    function owner() external view returns (address);
+
+    // ========================== ACTIONS ==========================
     function createPool(
         address tokenA,
         address tokenB,
@@ -14,10 +17,7 @@ interface ICAFPoolFactory {
         address tokenB
     ) external view returns (address pool);
 
-    // IMMUTABLES
-    function owner() external view returns (address);
-
-    // EVENTS
+    // ========================== EVENTS ==========================
     event PoolCreated(
         address indexed tokenA,
         address indexed tokenB,
