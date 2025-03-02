@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import "./interfaces/ICAFPoolFactory.sol";
+import "../interfaces/ICAFPoolFactory.sol";
 import "./CAFPool.sol";
 
 contract CAFPoolFactory is ICAFPoolFactory {
