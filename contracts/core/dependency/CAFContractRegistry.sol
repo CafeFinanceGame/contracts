@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
@@ -25,7 +25,7 @@ contract CAFContractRegistry is
     function registerContract(
         uint256 contractType,
         address contractAddress
-    ) external override {
+    ) external override onlyRole(ADMIN_ROLE) {
         require(
             contractAddress != address(0),
             "CAFContractRegistry: contract address is zero"
@@ -46,7 +46,7 @@ contract CAFContractRegistry is
         contracts[contractType] = contractAddress;
     }
 
-    function unregisterContract(uint256 contractType) external override {
+    function unregisterContract(uint256 contractType) external override onlyRole(ADMIN_ROLE){
         require(
             contracts[contractType] != address(0),
             "CAFContractRegistry: contract address is zero"

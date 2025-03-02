@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
@@ -14,7 +14,10 @@ abstract contract CAFAccessControl is AccessControl {
 
     constructor(address _contractRegistry) {
         contractRegistry = ICAFContractRegistry(_contractRegistry);
+        _grantRole(ADMIN_ROLE, msg.sender);
+    }
 
+    function initialize() external {
         _grantRole(
             SYSTEM_ROLE,
             contractRegistry.getContractAddress(
