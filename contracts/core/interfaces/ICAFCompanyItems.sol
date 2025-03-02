@@ -28,6 +28,11 @@ interface ICAFCompanyItems {
     /// @param _companyId The id of the company
     function get(uint256 _companyId) external view returns (Company memory);
 
+    /// @notice Get company by owner
+    /// @param _owner The address of the company's owner
+    /// @return The company id
+    function getByOwner(address _owner) external view returns (uint256);
+
     /// @notice Replenish the company's energy.
     /// @dev Energy is used to perform actions in the game.
     /// @param _companyId The id of the company
@@ -70,6 +75,11 @@ interface ICAFCompanyItems {
     /// @param _id The id of the company
     /// @return True if the company exists
     function isCompany(uint256 _id) external view returns (bool);
+
+    /// @notice Check user has company
+    /// @param _owner The address of the company's owner
+    /// @return True if the user has a company
+    function hasCompany(address _owner) external view returns (bool);
 
     // ========================== EVENTS ===========================
 

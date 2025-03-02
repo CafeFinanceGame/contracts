@@ -19,6 +19,7 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
     int256 public constant INITIAL_PROFIT = 0;
 
     mapping(uint256 => Company) private _companies;
+    mapping(address => uint256) private _ownerToCompany;
 
     constructor(
         address _contractRegistry
@@ -29,6 +30,15 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         address _owner,
         PlayerLibrary.PlayerRole _type
     ) external override returns (uint256) {
+        require(
+            _owner != address(0),
+            "CAF: Company owner cannot be the zero address"
+        );
+        require(
+            _ownerToCompany[_owner] == 0,
+            "CAF: Company already exists for this owner"
+        );
+
         uint256 _companyId = uint256(
             keccak256(abi.encodePacked(_owner, _type))
         );
@@ -43,6 +53,8 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
             profit: INITIAL_PROFIT
         });
 
+        _ownerToCompany[_owner] = _companyId;
+
         return _companyId;
     }
 
@@ -50,6 +62,12 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         uint256 _companyId
     ) external view override onlyExist(_companyId) returns (Company memory) {
         return _companies[_companyId];
+    }
+
+    function getByOwner(
+        address _owner
+    ) external view override returns (uint256) {
+        return _ownerToCompany[_owner];
     }
 
     function remove(
@@ -104,6 +122,10 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         uint256 _companyId
     ) external view override onlyExist(_companyId) returns (bool) {
         return _companies[_companyId].owner != address(0);
+    }
+
+    function hasCompany(address _owner) external view override returns (bool) {
+        return _ownerToCompany[_owner] != 0;
     }
 
     modifier onlyExist(uint256 _companyId) {

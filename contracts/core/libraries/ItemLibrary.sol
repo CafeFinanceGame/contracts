@@ -16,20 +16,17 @@ library ItemLibrary {
 
     enum ProductItemType {
         // Coffee Company
-        BLACK_COFFEE,
-        SUGAR_COFFEE,
-        ESPRESSO,
-        MILK_COFFEE,
+        COFFEE_BEAN, // Default material product that only coffee company can import
+        BLACK_COFFEE, // Formula: Coffee Bean + Water + Kettle
+        MILK_COFFEE, // Formula: Black Coffee + Milk
         // Material Company
-        COFFEE_BEAN,
-        MILK,
-        SUGAR,
-        WATER,
+        POWDERED_MILK, // Default material product that only material company can import
+        WATER, // Default material product that only material company can import
+        MILK, // Formula: Powdered Milk + Water + Kettle
         // Machine Company
-        GRINDER,
-        KETTLE,
-        MOKA_POT,
-        MILK_FROTHER
+        MACHINE_MATERIAL, // Default material product that only machine company can import
+        KETTLE, // Formula: Machine Material + Water
+        MILK_FROTHER // Formula: Machine Material + Milk,
     }
 
     function getUint8Type(ItemType itemType) internal pure returns (uint8) {

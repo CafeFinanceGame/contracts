@@ -4,6 +4,20 @@ pragma solidity ^0.8.28;
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
 interface ICAFGameEconomy {
+    struct ProductEconomy {
+        uint256 energy;
+        uint256 durability;
+        uint8 decayRate;
+        uint256 decayPeriod;
+        uint256 costPrice;
+        uint256 insurancePrice;
+        uint256 freightPrice;
+    }
+
+    struct ManufacturedProduct {
+        uint256 manufacturedPerHour;
+    }
+
     // ========================== ACTIONS ==========================
 
     /// @notice Update the economy of a raw material
@@ -29,17 +43,24 @@ interface ICAFGameEconomy {
 
     /// @notice Get the economy of product
     /// @param _productType The type of the product
-    /// @return The energy of the product
-    /// @return The durability of the product
-    /// @return The decay rate of the product
-    /// @return The decay period of the product
-    /// @return The cost price of the product
-    /// @return The insurance price of the product
-    /// @return The freight price of the product
+    /// @return The economy of the product
     function getProductEconomy(
         ItemLibrary.ProductItemType _productType
-    )
-        external
-        view
-        returns (uint256, uint256, uint8, uint256, uint256, uint256, uint256);
+    ) external view returns (ProductEconomy memory);
+
+    /// @notice Update the manufactured product
+    /// @param _productType The type of the manufactured product
+    /// @param _manufacturedPerHour The manufactured product per hour
+    /// @return True if the manufactured product is updated
+    function updateManufacturedProduct(
+        ItemLibrary.ProductItemType _productType,
+        uint256 _manufacturedPerHour
+    ) external returns (bool);
+
+    /// @notice Get the manufactured product
+    /// @param _productType The type of the manufactured product
+
+    function getManufacturedProduct(
+        ItemLibrary.ProductItemType _productType
+    ) external view returns (ManufacturedProduct memory);
 }
