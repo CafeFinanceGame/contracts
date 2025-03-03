@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 import {IMaterialFactory} from "../interfaces/IMaterialFactory.sol";

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "deploy": "hardhat run scripts/deploy.ts --network testnet2"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.13",

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "../interfaces/ICAFPool.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CAFPool is ICAFPool {
     /// @inheritdoc ICAFPool
-    address public immutable override factory;
+    address public override factory;
     /// @inheritdoc ICAFPool
     address public override tokenA;
     /// @inheritdoc ICAFPool
@@ -16,7 +16,7 @@ contract CAFPool is ICAFPool {
     /// @inheritdoc ICAFPool
     uint256 public override reserveB;
     /// @inheritdoc ICAFPool
-    uint24 public immutable override fee;
+    uint24 public override fee;
     /// @inheritdoc ICAFPool
     mapping(address => uint256) public override liquidity;
 
