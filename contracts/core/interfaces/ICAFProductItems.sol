@@ -2,14 +2,16 @@
 pragma solidity ^0.8.20;
 
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
+import {ICAFConsumableItems} from "./ICAFConsumableItems.sol";
+import {ICAFManufacturableItems} from "./ICAFManufacturableItems.sol";
 
-interface ICAFProductItems {
+interface ICAFProductItems is ICAFConsumableItems, ICAFManufacturableItems {
     struct ProductItem {
         ItemLibrary.ProductItemType productType;
         uint256 price;
         uint256 energy; // Energy of the item, only for consumable products
         uint256 durability; // Durability of the item, only for machine products
-        uint256 msgTime; // Manufactured time of the item   
+        uint256 msgTime; // Manufactured time of the item
         uint256 expTime; // Expiration time of the item
     }
 

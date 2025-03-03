@@ -6,21 +6,21 @@ import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
 import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 import {CAFModuleBase} from "./CAFModuleBase.sol";
 
-abstract contract CAFAccessControl is AccessControl {
+abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
+    bool private _isInitialized;
+
     bytes32 public constant SYSTEM_ROLE = keccak256("SYSTEM_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    ICAFContractRegistry private contractRegistry;
-
-    constructor(address _contractRegistry) {
-        contractRegistry = ICAFContractRegistry(_contractRegistry);
+    constructor(address _contractRegistry) CAFModuleBase(_contractRegistry) {
         _grantRole(ADMIN_ROLE, msg.sender);
     }
 
     function initialize() external {
+        require(!_isInitialized, "CAF: Already initialized");
         _grantRole(
             SYSTEM_ROLE,
-            contractRegistry.getContractAddress(
+            registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -30,17 +30,7 @@ abstract contract CAFAccessControl is AccessControl {
         );
         _grantRole(
             SYSTEM_ROLE,
-            contractRegistry.getContractAddress(
-                uint256(
-                    ICAFContractRegistry
-                        .ContractRegistryType
-                        .CAF_MATERIAL_ITEMS_CONTRACT
-                )
-            )
-        );
-        _grantRole(
-            SYSTEM_ROLE,
-            contractRegistry.getContractAddress(
+            registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -50,15 +40,17 @@ abstract contract CAFAccessControl is AccessControl {
         );
         _grantRole(
             SYSTEM_ROLE,
-            contractRegistry.getContractAddress(
+            registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
-                        .CAF_MACHINE_ITEMS_CONTRACT
+                        .CAF_EVENT_ITEMS_CONTRACT
                 )
             )
         );
 
         _grantRole(ADMIN_ROLE, msg.sender);
+
+        _isInitialized = true;
     }
 }

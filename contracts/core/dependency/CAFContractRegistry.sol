@@ -40,13 +40,17 @@ contract CAFContractRegistry is
                 contractType ==
                 uint256(ContractRegistryType.CAF_PRODUCT_ITEMS_CONTRACT) ||
                 contractType ==
-                uint256(ContractRegistryType.CAF_COMPANY_ITEMS_CONTRACT)
+                uint256(ContractRegistryType.CAF_COMPANY_ITEMS_CONTRACT) ||
+                contractType ==
+                uint256(ContractRegistryType.CAF_EVENT_ITEMS_CONTRACT)
         );
 
         contracts[contractType] = contractAddress;
     }
 
-    function unregisterContract(uint256 contractType) external override onlyRole(ADMIN_ROLE){
+    function unregisterContract(
+        uint256 contractType
+    ) external override onlyRole(ADMIN_ROLE) {
         require(
             contracts[contractType] != address(0),
             "CAFContractRegistry: contract address is zero"

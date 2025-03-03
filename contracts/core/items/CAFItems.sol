@@ -23,9 +23,5 @@ abstract contract CAFItems is
 
     constructor(
         address _contractRegistry
-    ) CAFAccessControl(_contractRegistry) CAFModuleBase(_contractRegistry) {}
-
-    // ========================== STATE ==========================
-    // ========================== ACTIONS ==========================
-    // ========================== EVENTS ==========================
+    ) CAFAccessControl(_contractRegistry) {}
 }

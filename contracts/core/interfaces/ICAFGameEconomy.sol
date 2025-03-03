@@ -14,11 +14,31 @@ interface ICAFGameEconomy {
         uint256 freightPrice;
     }
 
+    enum CompanyAcitivityEnergyFeeType {
+        MANUFACTURE,
+        SWAP
+    }
+
+    struct ActivityEnergyFee {
+        CompanyAcitivityEnergyFeeType activityType;
+        uint8 fee;
+    }
+
     struct ManufacturedProduct {
         uint256 manufacturedPerHour;
     }
 
     // ========================== ACTIONS ==========================
+
+    /// @notice Get the current price basis from the material used to manufacture the product
+    /// @param _productType The type of the product
+    /// @return The current price basis
+    function getCurrentPrice(
+        ItemLibrary.ProductItemType _productType
+    ) external view returns (uint256);
+
+    /// @notice Update all prices, this function will be called by the game center
+    function updateAllPrices() external;
 
     /// @notice Update the economy of a raw material
     /// @param _productType The type of the raw material
@@ -59,8 +79,22 @@ interface ICAFGameEconomy {
 
     /// @notice Get the manufactured product
     /// @param _productType The type of the manufactured product
-
     function getManufacturedProduct(
         ItemLibrary.ProductItemType _productType
     ) external view returns (ManufacturedProduct memory);
+
+    /// @notice Update the activity fee
+    /// @param _activityType The type of the activity
+    /// @param _fee The fee of the activity
+    /// @return True if the activity fee is updated
+    function updateActivityFee(
+        CompanyAcitivityEnergyFeeType _activityType,
+        uint256 _fee
+    ) external returns (bool);
+
+    /// @notice Get the activity fee
+    /// @param _activityType The type of the activity
+    function getActivityFee(
+        CompanyAcitivityEnergyFeeType _activityType
+    ) external view returns (ActivityEnergyFee memory);
 }

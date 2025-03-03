@@ -8,17 +8,13 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ICAFGameEconomy} from "../interfaces/ICAFGameEconomy.sol";
 import {ICAFProductItems} from "../interfaces/ICAFProductItems.sol";
 import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
-import {ICAFConsumableItems} from "../interfaces/ICAFConsumableItems.sol";
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 import {ICAFCompanyItems} from "../interfaces/ICAFCompanyItems.sol";
 import {CAFDecayableItems} from "../items/CAFDecayableItems.sol";
 import {CAFItems} from "../items/CAFItems.sol";
-import {ICAFManufacturableItems} from "../interfaces/ICAFManufacturableItems.sol";
 
 contract CAFProductItems is
     ICAFProductItems,
-    ICAFConsumableItems,
-    ICAFManufacturableItems,
     ERC1155Burnable,
     CAFDecayableItems
 {
@@ -29,11 +25,11 @@ contract CAFProductItems is
     - Each company which produces products has to import materials or machines.
     */
 
-    // ============================== STATES =========================================
+    bool private _initialized;
+
     ICAFGameEconomy private _gameEconomy;
 
     ICAFCompanyItems private _companyItems;
-    ICAFContractRegistry private _registry;
     mapping(uint256 => ProductItem) public productItems;
     mapping(uint256 => ProductItemInfo) private _newProductInfo;
 
@@ -45,10 +41,13 @@ contract CAFProductItems is
 
     constructor(
         address _contractRegistry
-    ) ERC1155("") CAFDecayableItems(_contractRegistry) {
-        _registry = ICAFContractRegistry(_contractRegistry);
+    ) ERC1155("") CAFDecayableItems(_contractRegistry) {}
+
+    function init() external {
+        require(!_initialized, "CAF: Already initialized");
+
         _companyItems = ICAFCompanyItems(
-            _registry.getContractAddress(
+            registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -58,7 +57,7 @@ contract CAFProductItems is
         );
 
         _gameEconomy = ICAFGameEconomy(
-            _registry.getContractAddress(
+            registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -66,27 +65,9 @@ contract CAFProductItems is
                 )
             )
         );
+
+        _initialized = true;
     }
-
-    // ============================== MODIFIERS =========================================
-
-    modifier isNotExpired(uint256 _itemId) {
-        require(
-            productItems[_itemId].expTime >= block.timestamp,
-            "ProductItems: item is expired"
-        );
-        _;
-    }
-
-    modifier isExpired(uint256 _itemId) {
-        require(
-            productItems[_itemId].expTime < block.timestamp,
-            "ProductItems: item is not expired"
-        );
-        _;
-    }
-
-    // ============================== ACTIONS =========================================
 
     function create(
         uint256 _companyId,
@@ -161,7 +142,7 @@ contract CAFProductItems is
             );
         }
 
-        address to = _registry.getContractAddress(
+        address to = registry.getContractAddress(
             uint256(
                 ICAFContractRegistry
                     .ContractRegistryType
@@ -234,15 +215,17 @@ contract CAFProductItems is
         return item.energy == 0 ? item.durability : item.energy;
     }
 
-    function consume(uint256 _itemId) external override isNotExpired(_itemId) {
-        require(
-            balanceOf(msg.sender, _itemId) >= 1,
-            "ProductItems: insufficient balance"
-        );
+    function consume(
+        uint256 _itemId,
+        uint256 _amount
+    ) external override isNotExpired(_itemId) onlyOwner(_itemId) {
+        ProductItem storage item = productItems[_itemId];
 
-        productItems[_itemId].energy = 0;
+        require(item.energy >= _amount, "ProductItems: insufficient energy");
 
-        emit Consumed(_itemId);
+        item.energy -= _amount;
+
+        emit Consumed(_itemId, _amount);
     }
 
     function manufacture(
@@ -260,6 +243,20 @@ contract CAFProductItems is
         uint256 _companyId = _companyItems.getByOwner(msg.sender);
 
         require(_companyId != 0, "ProductItems: company does not exist");
+
+        ICAFCompanyItems.Company memory company = _companyItems.get(_companyId);
+
+        ICAFGameEconomy.ActivityEnergyFee
+            memory _manufactureEnergyFee = _gameEconomy.getActivityFee(
+                ICAFGameEconomy.CompanyAcitivityEnergyFeeType.MANUFACTURE
+            );
+
+        require(
+            company.energy >= _manufactureEnergyFee.fee,
+            "ProductItems: company has insufficient energy"
+        );
+
+        _companyItems.useEnergy(_companyId, _manufactureEnergyFee.fee);
 
         // Manufacture the black coffee
         if (_productType == ItemLibrary.ProductItemType.BLACK_COFFEE) {
@@ -501,5 +498,29 @@ contract CAFProductItems is
         }
 
         return (totalDurability * K_d) / 100;
+    }
+
+    modifier isNotExpired(uint256 _itemId) {
+        require(
+            productItems[_itemId].expTime >= block.timestamp,
+            "ProductItems: item is expired"
+        );
+        _;
+    }
+
+    modifier isExpired(uint256 _itemId) {
+        require(
+            productItems[_itemId].expTime < block.timestamp,
+            "ProductItems: item is not expired"
+        );
+        _;
+    }
+
+    modifier onlyOwner(uint256 _itemId) {
+        require(
+            balanceOf(msg.sender, _itemId) >= 1,
+            "ProductItems: sender is not the owner"
+        );
+        _;
     }
 }

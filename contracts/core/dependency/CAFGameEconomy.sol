@@ -95,9 +95,13 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
         + Freight Price: 10 CAF
     */
 
+    uint256 public constant INITIAL_INACTIVE_MATERIAL_PRODUCT_SUPPLY = 10e4;
+
     mapping(ItemLibrary.ProductItemType => ProductEconomy) public products;
     mapping(ItemLibrary.ProductItemType => ManufacturedProduct)
         public manufacturedProducts;
+    mapping(ItemLibrary.ProductItemType => uint256) private _cachedPrices;
+    mapping(ItemLibrary.ProductItemType => uint256) private _lastUpdatedBlock;
 
     constructor(address _contractRegistry) CAFAccessControl(_contractRegistry) {
         _initializeProducts();
@@ -232,10 +236,76 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
         return true;
     }
 
+    function getCurrentPrice(
+        ItemLibrary.ProductItemType _productType
+    ) public view override returns (uint256) {
+        if (_lastUpdatedBlock[_productType] == block.number) {
+            return _cachedPrices[_productType];
+        }
+
+        ProductEconomy memory _product = products[_productType];
+        uint256 price;
+
+        if (
+            _productType == ItemLibrary.ProductItemType.COFFEE_BEAN ||
+            _productType == ItemLibrary.ProductItemType.POWDERED_MILK ||
+            _productType == ItemLibrary.ProductItemType.WATER ||
+            _productType == ItemLibrary.ProductItemType.MACHINE_MATERIAL
+        ) {
+            price =
+                _product.costPrice +
+                _product.insurancePrice +
+                _product.freightPrice;
+        } else if (_productType == ItemLibrary.ProductItemType.BLACK_COFFEE) {
+            price =
+                _cachedPrices[ItemLibrary.ProductItemType.COFFEE_BEAN] +
+                _cachedPrices[ItemLibrary.ProductItemType.WATER] +
+                _cachedPrices[ItemLibrary.ProductItemType.KETTLE];
+        } else if (_productType == ItemLibrary.ProductItemType.MILK) {
+            price =
+                _cachedPrices[ItemLibrary.ProductItemType.POWDERED_MILK] +
+                _cachedPrices[ItemLibrary.ProductItemType.WATER] +
+                _cachedPrices[ItemLibrary.ProductItemType.KETTLE];
+        } else if (_productType == ItemLibrary.ProductItemType.MILK_COFFEE) {
+            price =
+                _cachedPrices[ItemLibrary.ProductItemType.BLACK_COFFEE] +
+                _cachedPrices[ItemLibrary.ProductItemType.MILK];
+        } else if (_productType == ItemLibrary.ProductItemType.KETTLE) {
+            price =
+                _cachedPrices[ItemLibrary.ProductItemType.MACHINE_MATERIAL] +
+                _cachedPrices[ItemLibrary.ProductItemType.WATER];
+        } else if (_productType == ItemLibrary.ProductItemType.MILK_FROTHER) {
+            price =
+                _cachedPrices[ItemLibrary.ProductItemType.MACHINE_MATERIAL] +
+                _cachedPrices[ItemLibrary.ProductItemType.MILK];
+        }
+
+        return price;
+    }
+
+    function _updatePriceCache(
+        ItemLibrary.ProductItemType _productType
+    ) internal {
+        _cachedPrices[_productType] = getCurrentPrice(_productType);
+        _lastUpdatedBlock[_productType] = block.number;
+    }
+
+    function updateAllPrices() external onlyRole(SYSTEM_ROLE) {
+        _updatePriceCache(ItemLibrary.ProductItemType.COFFEE_BEAN);
+        _updatePriceCache(ItemLibrary.ProductItemType.POWDERED_MILK);
+        _updatePriceCache(ItemLibrary.ProductItemType.WATER);
+        _updatePriceCache(ItemLibrary.ProductItemType.MACHINE_MATERIAL);
+        _updatePriceCache(ItemLibrary.ProductItemType.KETTLE);
+        _updatePriceCache(ItemLibrary.ProductItemType.MILK_FROTHER);
+        _updatePriceCache(ItemLibrary.ProductItemType.BLACK_COFFEE);
+        _updatePriceCache(ItemLibrary.ProductItemType.MILK);
+        _updatePriceCache(ItemLibrary.ProductItemType.MILK_COFFEE);
+    }
+
     function updateManufacturedProduct(
         ItemLibrary.ProductItemType _productType,
         uint256 _manufacturedPerHour
-    ) external onlyRole(ADMIN_ROLE) override returns (bool) {
+    ) external override onlyRole(ADMIN_ROLE) returns (bool) {
         require(
             manufacturedProducts[_productType].manufacturedPerHour > 0,
             "Product does not exist"
@@ -265,4 +335,13 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
 
         return _product;
     }
+
+    function updateActivityFee(
+        CompanyAcitivityEnergyFeeType _activityType,
+        uint256 _fee
+    ) external override returns (bool) {}
+
+    function getActivityFee(
+        CompanyAcitivityEnergyFeeType _activityType
+    ) external view override returns (ActivityEnergyFee memory) {}
 }

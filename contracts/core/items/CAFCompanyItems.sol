@@ -8,24 +8,39 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {CAFItems} from "../items/CAFItems.sol";
 import {ICAFCompanyItems} from "../interfaces/ICAFCompanyItems.sol";
 import {ICAFProductItems} from "../interfaces/ICAFProductItems.sol";
+import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
 import {PlayerLibrary} from "../../core/libraries/PlayerLibrary.sol";
 import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 
 contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
-    // ========================== STATE ==========================
+    bool private _initialized;
+
     uint8 public constant INITIAL_ENERGY = 100;
-    uint256 public constant INITIAL_CAPITALIZATION = 0;
-    uint256 public constant INITIAL_REVENUE = 0;
-    int256 public constant INITIAL_PROFIT = 0;
 
     mapping(uint256 => Company) private _companies;
     mapping(address => uint256) private _ownerToCompany;
+    ICAFProductItems private _productItems;
 
     constructor(
         address _contractRegistry
     ) CAFItems(_contractRegistry) ERC1155("") {}
 
-    // ========================== ACTIONS ==========================
+    function init() external {
+        require(!_initialized, "CAF: Already initialized");
+
+        _productItems = ICAFProductItems(
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_PRODUCT_ITEMS_CONTRACT
+                )
+            )
+        );
+
+        _initialized = true;
+    }
+
     function create(
         address _owner,
         PlayerLibrary.PlayerRole _type
@@ -42,15 +57,13 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         uint256 _companyId = uint256(
             keccak256(abi.encodePacked(_owner, _type))
         );
+
         _mint(_owner, _companyId, 1, "");
 
         _companies[_companyId] = Company({
             owner: _owner,
             role: _type,
-            energy: INITIAL_ENERGY,
-            capitalization: INITIAL_CAPITALIZATION,
-            revenue: INITIAL_REVENUE,
-            profit: INITIAL_PROFIT
+            energy: INITIAL_ENERGY
         });
 
         _ownerToCompany[_owner] = _companyId;
@@ -72,15 +85,33 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
 
     function remove(
         uint256 _companyId
-    ) external override onlyExist(_companyId) {
-        // _burn(_companyId);
-        // delete _companies[_companyId];
+    ) external override onlyExist(_companyId) onlyOwner(_companyId) {
+        require(
+            _companies[_companyId].owner == msg.sender,
+            "CAF: Company does not belong to sender"
+        );
+
+        _burn(msg.sender, _companyId, 1);
+
+        delete _companies[_companyId];
+        delete _ownerToCompany[msg.sender];
     }
 
     function replenishEnergy(
         uint256 _companyId,
         uint256 _itemId
-    ) external override onlyExist(_companyId) {}
+    ) external override onlyExist(_companyId) onlyOwner(_companyId) {
+        require(
+            _companies[_companyId].energy < 100,
+            "CAF: Energy is already full"
+        );
+
+        uint256 _neededEnergy = 100 - _companies[_companyId].energy;
+
+        _productItems.consume(_itemId, _neededEnergy);
+
+        emit EnergyReplenished(_companyId, _neededEnergy);
+    }
 
     function role(
         uint256 _companyId
@@ -94,28 +125,25 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         return _companies[_companyId].role;
     }
 
-    function energy(
-        uint256 _companyId
-    ) external view override onlyExist(_companyId) returns (uint8) {
+    function useEnergy(uint256 _companyId, uint8 _amount) external override {
+        require(
+            hasRole(SYSTEM_ROLE, msg.sender) ||
+                _companies[_companyId].owner == msg.sender,
+            "CAF: Sender is not the owner"
+        );
+
+        require(
+            _companies[_companyId].energy >= _amount,
+            "CAF: Insufficient energy"
+        );
+
+        _companies[_companyId].energy -= _amount;
+
+        emit EnergyUsed(_companyId, _amount);
+    }
+
+    function energy(uint256 _companyId) external view override returns (uint8) {
         return _companies[_companyId].energy;
-    }
-
-    function capitalization(
-        uint256 _companyId
-    ) external view override onlyExist(_companyId) returns (uint256) {
-        return _companies[_companyId].capitalization;
-    }
-
-    function revenue(
-        uint256 _companyId
-    ) external view override onlyExist(_companyId) returns (uint256) {
-        return _companies[_companyId].revenue;
-    }
-
-    function profit(
-        uint256 _companyId
-    ) external view override onlyExist(_companyId) returns (int256) {
-        return _companies[_companyId].profit;
     }
 
     function isCompany(
@@ -132,6 +160,14 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
         require(
             _companyId > 0 && _companies[_companyId].owner != address(0),
             "CAF: Company does not exist"
+        );
+        _;
+    }
+
+    modifier onlyOwner(uint256 _companyId) {
+        require(
+            _companies[_companyId].owner == msg.sender,
+            "CAF: Company does not belong to sender"
         );
         _;
     }

@@ -7,10 +7,11 @@ interface ICAFContractRegistry {
         CAF_POOL_CONTRACT,
         CAF_GAME_MANAGER_CONTRACT,
         CAF_GAME_ECONOMY_CONTRACT,
+        CAF_MATERIAL_FACTORY_CONTRACT,
         CAF_COMPANY_ITEMS_CONTRACT,
-        CAF_MATERIAL_ITEMS_CONTRACT,
         CAF_PRODUCT_ITEMS_CONTRACT,
-        CAF_MACHINE_ITEMS_CONTRACT
+        CAF_EVENT_ITEMS_CONTRACT,
+        CAF_TOKEN_CONTRACT
     }
 
     // ========================== ACTIONS ==========================

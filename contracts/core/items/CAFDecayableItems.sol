@@ -10,6 +10,7 @@ abstract contract CAFDecayableItems is CAFItems {
         uint256 decayPeriod;
         uint256 lastDecayTime;
     }
+    
     // ========================== STATES ==========================
 
     mapping(uint256 => CAFDecayableItem) public decayableItems;
