@@ -72,9 +72,7 @@ contract CAFProductItems is
 
     modifier isNotExpired(uint256 _itemId) {
         require(
-            productItems[_itemId].lastDecayTime +
-                productItems[_itemId].decayPeriod >
-                block.timestamp,
+            productItems[_itemId].expTime >= block.timestamp,
             "ProductItems: item is expired"
         );
         _;
@@ -82,9 +80,7 @@ contract CAFProductItems is
 
     modifier isExpired(uint256 _itemId) {
         require(
-            productItems[_itemId].lastDecayTime +
-                productItems[_itemId].decayPeriod <=
-                block.timestamp,
+            productItems[_itemId].expTime < block.timestamp,
             "ProductItems: item is not expired"
         );
         _;
@@ -121,17 +117,30 @@ contract CAFProductItems is
         ICAFGameEconomy.ProductEconomy memory productEconomy = _gameEconomy
             .getProductEconomy(_type);
 
+        uint256 _e0 = productEconomy.energy;
+        uint256 _d0 = productEconomy.durability;
+        uint256 _dP = productEconomy.decayPeriod;
+        uint8 _dR = productEconomy.decayRate;
+
+        uint256 _msgTime = block.timestamp;
+        uint256 _expTime = _msgTime;
+
+        if (_dR > 0) {
+            if (_e0 == 0 && _d0 > 0) {
+                _expTime += (_d0 * _dP) / _dR;
+            } else if (_d0 == 0 && _e0 > 0) {
+                _expTime += (_e0 * _dP) / _dR;
+            }
+        }
+
         ProductItem memory item = ProductItem({
             productType: _type,
             price: 0,
             energy: productEconomy.energy,
             durability: productEconomy.durability,
-            decayPeriod: productEconomy.decayPeriod,
-            decayRate: productEconomy.decayRate,
-            lastDecayTime: block.timestamp
+            msgTime: _msgTime,
+            expTime: _expTime
         });
-
-        item.lastDecayTime = block.timestamp;
 
         productItems[id] = item;
 
@@ -174,16 +183,12 @@ contract CAFProductItems is
         uint256 _itemId,
         uint256 _price,
         uint256 _energy,
-        uint256 _durability,
-        uint256 _decayPeriod,
-        uint8 _decayRate
+        uint256 _durability
     ) external override onlyRole(SYSTEM_ROLE) {
         ProductItem storage item = productItems[_itemId];
         item.price = _price;
         item.energy = _energy;
         item.durability = _durability;
-        item.decayPeriod = _decayPeriod;
-        item.decayRate = _decayRate;
     }
 
     function get(
@@ -200,19 +205,33 @@ contract CAFProductItems is
         uint256 _itemId
     ) internal override isExpired(_itemId) returns (uint256) {
         ProductItem storage item = productItems[_itemId];
-        uint256 timePassed = block.timestamp - item.lastDecayTime;
-        uint256 decayCount = timePassed / item.decayPeriod;
+        ICAFGameEconomy.ProductEconomy memory productEconomy = _gameEconomy
+            .getProductEconomy(item.productType);
 
-        uint256 decayAmount = item.decayRate * decayCount;
-        if (item.energy > 0) {
-            item.energy -= uint8(decayAmount);
+        uint256 _e0 = productEconomy.energy;
+        uint256 _d0 = productEconomy.durability;
+        uint256 _decayPeriod = productEconomy.decayPeriod;
+        uint8 _decayRate = productEconomy.decayRate;
+
+        uint256 _now = block.timestamp;
+        uint256 _msgTime = item.msgTime;
+        uint256 _expTime = item.expTime;
+        uint256 _timePassed = _now - _msgTime;
+
+        if (_now >= _expTime) {
+            item.energy = 0;
+            item.durability = 0;
         } else {
-            item.durability -= uint8(decayAmount);
+            uint256 _decayFactor = 100 -
+                ((_timePassed * _decayRate * 100) / _decayPeriod);
+
+            uint256 _effectiveEnergy = (_e0 * _decayFactor) / 100;
+            uint256 _effectiveDurability = (_d0 * _decayFactor) / 100;
+
+            item.energy = _effectiveEnergy;
+            item.durability = _effectiveDurability;
         }
-
-        item.lastDecayTime += decayCount * item.decayPeriod;
-
-        return decayAmount;
+        return item.energy == 0 ? item.durability : item.energy;
     }
 
     function consume(uint256 _itemId) external override isNotExpired(_itemId) {
@@ -458,22 +477,13 @@ contract CAFProductItems is
 
     function calculateEnergy(
         uint256[] memory _componentIds
-    ) public view override returns (uint256) {
+    ) public override returns (uint256) {
         uint256 totalEnergy = 0;
         uint256 K = 90; // Energy coefficient adjusts the final energy of the manufactured product based on component energy and decay
 
         for (uint256 i = 0; i < _componentIds.length; i++) {
             uint256 itemId = _componentIds[i];
-            ProductItem storage item = productItems[itemId];
-
-            // Tính phần energy còn lại sau decay
-            uint256 timePassed = block.timestamp - item.lastDecayTime;
-            uint256 decayFactor = (timePassed >= item.decayPeriod)
-                ? 0
-                : ((item.decayPeriod - timePassed) * 100) / item.decayPeriod;
-
-            uint256 effectiveEnergy = (item.energy * decayFactor) / 100;
-            totalEnergy += effectiveEnergy;
+            totalEnergy += decay(itemId);
         }
 
         return (totalEnergy * K) / 100;
@@ -481,21 +491,13 @@ contract CAFProductItems is
 
     function calculateDurability(
         uint256[] memory _componentIds
-    ) public view override returns (uint256) {
+    ) public override returns (uint256) {
         uint256 totalDurability = 0;
         uint256 K_d = 160; // Durability coefficient determines the durability of manufactured machines or tools
 
         for (uint256 i = 0; i < _componentIds.length; i++) {
             uint256 itemId = _componentIds[i];
-            ProductItem storage item = productItems[itemId];
-
-            uint256 timePassed = block.timestamp - item.lastDecayTime;
-            uint256 decayFactor = (timePassed >= item.decayPeriod)
-                ? 0
-                : ((item.decayPeriod - timePassed) * 100) / item.decayPeriod;
-
-            uint256 effectiveDurability = (item.durability * decayFactor) / 100;
-            totalDurability += effectiveDurability;
+            totalDurability += decay(itemId);
         }
 
         return (totalDurability * K_d) / 100;

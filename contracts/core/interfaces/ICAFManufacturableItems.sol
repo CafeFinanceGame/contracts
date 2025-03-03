@@ -37,12 +37,12 @@ interface ICAFManufacturableItems {
     /// @return The energy of the product
     function calculateEnergy(
         uint256[] memory _componentIds
-    ) external view returns (uint256);
+    ) external returns (uint256);
 
     /// @notice Calculate durability of the product
     /// @param _componentIds The component ids of the product
     /// @return The durability of the product
     function calculateDurability(
         uint256[] memory _componentIds
-    ) external view returns (uint256);
+    ) external returns (uint256);
 }

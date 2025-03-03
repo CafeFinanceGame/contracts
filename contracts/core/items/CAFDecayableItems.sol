@@ -16,17 +16,6 @@ abstract contract CAFDecayableItems is CAFItems {
 
     constructor(address _contractRegistry) CAFItems(_contractRegistry) {}
     // ========================== ACTIONS ==========================
-    /// @notice Calculate the decay of the item
-    /// @dev The item will lose energy after each decay period.
-    /// @param _itemId The item id
-    /// @return The amount of sth that the item will lose
-    function calculateDecay(uint256 _itemId) internal view returns (uint256) {
-        CAFDecayableItem storage item = decayableItems[_itemId];
-        uint256 timePassed = block.timestamp - item.lastDecayTime;
-        uint256 decayCount = timePassed / item.decayPeriod;
-
-        return item.decayRate * decayCount;
-    }
 
     /// @notice Decay the item
     /// @dev The item will lose energy after each decay period.

@@ -9,9 +9,8 @@ interface ICAFProductItems {
         uint256 price;
         uint256 energy; // Energy of the item, only for consumable products
         uint256 durability; // Durability of the item, only for machine products
-        uint8 decayRate;
-        uint256 decayPeriod;
-        uint256 lastDecayTime;
+        uint256 msgTime; // Manufactured time of the item   
+        uint256 expTime; // Expiration time of the item
     }
 
     struct ProductItemInfo {
@@ -59,15 +58,11 @@ interface ICAFProductItems {
     /// @param _price The price of the item
     /// @param _energy The energy of the item
     /// @param _durability The durability of the item
-    /// @param _decayPeriod The decay period of the item
-    /// @param _decayRate The decay rate of the item
     function updateProductItem(
         uint256 _itemId,
         uint256 _price,
         uint256 _energy,
-        uint256 _durability,
-        uint256 _decayPeriod,
-        uint8 _decayRate
+        uint256 _durability
     ) external;
 
     // ========================== EVENTS ==========================
