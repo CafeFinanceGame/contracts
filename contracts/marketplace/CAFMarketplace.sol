@@ -3,32 +3,30 @@ pragma solidity ^0.8.20;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ICAFToken} from "../interfaces/ICAFToken.sol";
-import {CAFModuleBase} from "../core/dependency/CAFModuleBase.sol";
 import {ICAFMarketplace} from "./ICAFMarketplace.sol";
 import {ICAFResaleStore} from "./ICAFResaleStore.sol";
 import {ICAFContractRegistry} from "../core/interfaces/ICAFContractRegistry.sol";
 import {ICAFGameEconomy} from "../core/interfaces/ICAFGameEconomy.sol";
 import {CAFProductItems} from "../core/items/CAFProductItems.sol";
+import {CAFAccessControl} from "../core/dependency/CAFAccessControl.sol";
 
 contract CAFMarketplace is
-    CAFModuleBase,
+    CAFAccessControl,
     ICAFMarketplace,
     ICAFResaleStore,
     ReentrancyGuard
 {
-    bool private _initialized;
-
     ICAFToken private _cafToken;
     ICAFGameEconomy private _gameEconomy;
     CAFProductItems private _productItems;
 
     mapping(uint256 => ListedItem) public override listedItems;
 
-    constructor(address _contractRegistry) CAFModuleBase(_contractRegistry) {}
+    constructor(
+        address _contractRegistry
+    ) CAFAccessControl(_contractRegistry) {}
 
-    function initialize() external {
-        require(!_initialized, "CAFMarketplace: Already initialized");
-
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _productItems = CAFProductItems(
             registry.getContractAddress(
                 uint256(
@@ -54,8 +52,6 @@ contract CAFMarketplace is
                 )
             )
         );
-
-        _initialized = true;
     }
 
     function buy(uint256 _itemId) external override {

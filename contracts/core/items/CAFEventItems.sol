@@ -30,7 +30,7 @@ contract CAFEventItems is ICAFEventItems, CAFItems {
     constructor(
         address _contractRegistry
     )
-        ERC1155("https://api.caf.app/items/{id}.json")
+        ERC1155("https://cafigame.vercel.app/api/items/event/{id}.json")
         CAFItems(_contractRegistry)
     {}
 
@@ -69,6 +69,7 @@ contract CAFEventItems is ICAFEventItems, CAFItems {
     function remove(uint256 _eventId) external override {
         _burn(msg.sender, _eventId, 1);
     }
+
     function start(uint256 _eventId) external override onlyRole(SYSTEM_ROLE) {
         require(
             balanceOf(msg.sender, _eventId) > 0,

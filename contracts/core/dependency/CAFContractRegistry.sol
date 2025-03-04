@@ -31,20 +31,6 @@ contract CAFContractRegistry is
             "CAFContractRegistry: contract address is zero"
         );
 
-        require(
-            contractType == uint256(ContractRegistryType.CAF_POOL_CONTRACT) ||
-                contractType ==
-                uint256(ContractRegistryType.CAF_GAME_MANAGER_CONTRACT) ||
-                contractType ==
-                uint256(ContractRegistryType.CAF_GAME_ECONOMY_CONTRACT) ||
-                contractType ==
-                uint256(ContractRegistryType.CAF_PRODUCT_ITEMS_CONTRACT) ||
-                contractType ==
-                uint256(ContractRegistryType.CAF_COMPANY_ITEMS_CONTRACT) ||
-                contractType ==
-                uint256(ContractRegistryType.CAF_EVENT_ITEMS_CONTRACT)
-        );
-
         contracts[contractType] = contractAddress;
     }
 

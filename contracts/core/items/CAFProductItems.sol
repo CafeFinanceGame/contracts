@@ -25,8 +25,6 @@ contract CAFProductItems is
     - Each company which produces products has to import materials or machines.
     */
 
-    bool private _initialized;
-
     ICAFGameEconomy private _gameEconomy;
 
     ICAFCompanyItems private _companyItems;
@@ -41,11 +39,9 @@ contract CAFProductItems is
 
     constructor(
         address _contractRegistry
-    ) ERC1155("") CAFDecayableItems(_contractRegistry) {}
+    ) ERC1155("https://cafigame.vercel.app/api/items/product/{id}.json") CAFDecayableItems(_contractRegistry) {}
 
-    function init() external {
-        require(!_initialized, "CAF: Already initialized");
-
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _companyItems = ICAFCompanyItems(
             registry.getContractAddress(
                 uint256(
@@ -65,8 +61,6 @@ contract CAFProductItems is
                 )
             )
         );
-
-        _initialized = true;
     }
 
     function create(

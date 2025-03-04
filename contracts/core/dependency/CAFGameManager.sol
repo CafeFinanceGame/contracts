@@ -14,8 +14,6 @@ contract CAFGameManager is ICAFGameManger, CAFAccessControl {
     - The game manager is the core of the game, it will manage all the game logic and rules
     */
 
-    bool private _isInitialized;
-
     CAFToken private _cafToken;
     IMaterialFactory private _materialFactory;
 
@@ -23,9 +21,7 @@ contract CAFGameManager is ICAFGameManger, CAFAccessControl {
         address _contractRegistry
     ) CAFAccessControl(_contractRegistry) {}
 
-    function init() external {
-        require(!_isInitialized, "CAFGameManager: already initialized");
-
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _cafToken = CAFToken(
             registry.getContractAddress(
                 uint256(
@@ -43,8 +39,6 @@ contract CAFGameManager is ICAFGameManger, CAFAccessControl {
                 )
             )
         );
-
-        _isInitialized = true;
     }
 
     function autoTriggerPerHour() external override {

@@ -7,17 +7,56 @@ import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 import {CAFModuleBase} from "./CAFModuleBase.sol";
 
 abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
-    bool private _isInitialized;
-
     bytes32 public constant SYSTEM_ROLE = keccak256("SYSTEM_ROLE");
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     constructor(address _contractRegistry) CAFModuleBase(_contractRegistry) {
         _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(SYSTEM_ROLE, ADMIN_ROLE);
     }
 
-    function initialize() external {
-        require(!_isInitialized, "CAF: Already initialized");
+    function setUp() external onlyRole(ADMIN_ROLE) {
+        _grantRole(
+            SYSTEM_ROLE,
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MARKETPLACE_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_GAME_MANAGER_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_GAME_ECONOMY_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MATERIAL_FACTORY_CONTRACT
+                )
+            )
+        );
         _grantRole(
             SYSTEM_ROLE,
             registry.getContractAddress(
@@ -28,6 +67,7 @@ abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
                 )
             )
         );
+
         _grantRole(
             SYSTEM_ROLE,
             registry.getContractAddress(
@@ -38,6 +78,7 @@ abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
                 )
             )
         );
+
         _grantRole(
             SYSTEM_ROLE,
             registry.getContractAddress(
@@ -49,8 +90,15 @@ abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
             )
         );
 
-        _grantRole(ADMIN_ROLE, msg.sender);
+        _grantRole(
+            SYSTEM_ROLE,
+            registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry.ContractRegistryType.CAF_POOL_CONTRACT
+                )
+            )
+        );
 
-        _isInitialized = true;
+        _grantRole(SYSTEM_ROLE, address(this));
     }
 }

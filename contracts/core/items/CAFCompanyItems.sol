@@ -13,8 +13,6 @@ import {PlayerLibrary} from "../../core/libraries/PlayerLibrary.sol";
 import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 
 contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
-    bool private _initialized;
-
     uint8 public constant INITIAL_ENERGY = 100;
 
     mapping(uint256 => Company) private _companies;
@@ -23,11 +21,12 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
 
     constructor(
         address _contractRegistry
-    ) CAFItems(_contractRegistry) ERC1155("") {}
+    )
+        CAFItems(_contractRegistry)
+        ERC1155("https://cafigame.vercel.app/api/items/company/{id}.json")
+    {}
 
-    function init() external {
-        require(!_initialized, "CAF: Already initialized");
-
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _productItems = ICAFProductItems(
             registry.getContractAddress(
                 uint256(
@@ -37,8 +36,6 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
                 )
             )
         );
-
-        _initialized = true;
     }
 
     function create(

@@ -26,7 +26,11 @@ contract MaterialFactory is IMaterialFactory, CAFAccessControl {
     ICAFProductItems private _productItems;
     ICAFGameEconomy private _gameEconomy;
 
-    constructor(address _contractRegistry) CAFAccessControl(_contractRegistry) {
+    constructor(
+        address _contractRegistry
+    ) CAFAccessControl(_contractRegistry) {}
+
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _productItems = ICAFProductItems(
             registry.getContractAddress(
                 uint256(
