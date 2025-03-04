@@ -14,6 +14,7 @@ import {ControlLibrary} from "../libraries/ControlLibrary.sol";
 
 contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
     uint8 public constant INITIAL_ENERGY = 100;
+    uint256 private _nextCompanyId = 1;
 
     mapping(uint256 => Company) private _companies;
     mapping(address => uint256) private _ownerToCompany;
@@ -51,10 +52,7 @@ contract CAFCompanyItems is ICAFCompanyItems, CAFItems {
             "CAF: Company already exists for this owner"
         );
 
-        uint256 _companyId = uint256(
-            keccak256(abi.encodePacked(_owner, _type))
-        );
-
+        uint256 _companyId = _nextCompanyId++;
         _mint(_owner, _companyId, 1, "");
 
         _companies[_companyId] = Company({

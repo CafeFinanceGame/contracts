@@ -16,7 +16,7 @@ abstract contract CAFAccessControl is AccessControl, CAFModuleBase {
         _setRoleAdmin(SYSTEM_ROLE, ADMIN_ROLE);
     }
 
-    function setUp() external onlyRole(ADMIN_ROLE) {
+    function setUp() external virtual onlyRole(ADMIN_ROLE) {
         _grantRole(
             SYSTEM_ROLE,
             registry.getContractAddress(

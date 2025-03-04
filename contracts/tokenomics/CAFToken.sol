@@ -30,8 +30,8 @@ contract CAFToken is ICAFToken, ERC20, CAFAccessControl {
     
     function mint(address to, uint256 amount) public override {
         require(
-            hasRole(SYSTEM_ROLE, msg.sender),
-            "CAFToken: must have system role to mint"
+            hasRole(SYSTEM_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
+            "CAFToken: must have access to mint"
         );
         _mint(to, amount);
     }
@@ -39,7 +39,7 @@ contract CAFToken is ICAFToken, ERC20, CAFAccessControl {
     function burn(uint256 amount) public override {
         require(
             hasRole(SYSTEM_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),
-            "CAFToken: must have system role to burn"
+            "CAFToken: must have access to burn"
         );
         _burn(msg.sender, amount);
     }

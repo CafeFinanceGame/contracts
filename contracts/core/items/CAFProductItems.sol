@@ -31,6 +31,8 @@ contract CAFProductItems is
     mapping(uint256 => ProductItem) public productItems;
     mapping(uint256 => ProductItemInfo) private _newProductInfo;
 
+    uint256 private _nextProductId = 1;
+
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(ERC1155, CAFItems) returns (bool) {
@@ -39,7 +41,10 @@ contract CAFProductItems is
 
     constructor(
         address _contractRegistry
-    ) ERC1155("https://cafigame.vercel.app/api/items/product/{id}.json") CAFDecayableItems(_contractRegistry) {}
+    )
+        ERC1155("https://cafigame.vercel.app/api/items/product/{id}.json")
+        CAFDecayableItems(_contractRegistry)
+    {}
 
     function setUp() external override onlyRole(ADMIN_ROLE) {
         _companyItems = ICAFCompanyItems(
@@ -85,10 +90,8 @@ contract CAFProductItems is
             "ProductItems: invalid type"
         );
 
-        uint256 id = uint256(
-            keccak256(abi.encodePacked(_type, block.timestamp))
-        );
-
+        uint256 id = _nextProductId++;
+        
         ICAFGameEconomy.ProductEconomy memory productEconomy = _gameEconomy
             .getProductEconomy(_type);
 
