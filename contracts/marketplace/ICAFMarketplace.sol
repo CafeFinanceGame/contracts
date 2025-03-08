@@ -8,21 +8,6 @@ interface ICAFMarketplace {
         uint256 price;
     }
 
-    // ==================== STATES ====================
-
-    /// @dev Get the listed item by id
-    /// @param _itemId The id of the item
-    function listedItems(
-        uint256 _itemId
-    )
-        external
-        view
-        returns (
-            uint256 id,
-            address owner,
-            uint256 price
-        );
-
     // ==================== ACTIONS ====================
 
     /// @notice Buy the item
@@ -43,6 +28,9 @@ interface ICAFMarketplace {
     /// @param _itemId The id of the item
     /// @param _price The price of the item
     function updatePrice(uint256 _itemId, uint256 _price) external;
+
+    // @notice Auto list per hour
+    function autoList() external;
 
     // ==================== EVENTS ====================
 

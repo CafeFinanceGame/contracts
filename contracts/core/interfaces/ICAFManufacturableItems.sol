@@ -32,17 +32,9 @@ interface ICAFManufacturableItems {
         uint256[] memory _componentIds
     ) external returns (uint256);
 
-    /// @notice Calculate energy of the product
-    /// @param _componentIds The component ids of the product
-    /// @return The energy of the product
-    function calculateEnergy(
-        uint256[] memory _componentIds
-    ) external returns (uint256);
-
-    /// @notice Calculate durability of the product
-    /// @param _componentIds The component ids of the product
-    /// @return The durability of the product
-    function calculateDurability(
-        uint256[] memory _componentIds
-    ) external returns (uint256);
+    // ========================== EVENTS ==========================
+    event ProductItemManufactured(
+        uint256 indexed itemId,
+        ItemLibrary.ProductItemType productType
+    );
 }

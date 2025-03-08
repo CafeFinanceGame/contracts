@@ -9,31 +9,34 @@ library ItemLibrary {
     }
 
     enum ItemType {
-        UTILITY,
         PRODUCT,
         EVENT
     }
 
+    enum CompanyType {
+        UNKNOWN,
+        FACTORY_COMPANY, // Only system has role this
+        COFFEE_COMPANY,
+        MACHINE_COMPANY,
+        MATERIAL_COMPANY
+    }
+
     enum ProductItemType {
+        UNKNOWN,
         // Coffee Company
         COFFEE_BEAN, // Default material product that only coffee company can import
-        BLACK_COFFEE, // Formula: Coffee Bean + Water + Kettle
-        MILK_COFFEE, // Formula: Black Coffee + Milk
+        COFFEE, // Formula: Coffee Bean + Water + Kettle
         // Material Company
-        POWDERED_MILK, // Default material product that only material company can import
         WATER, // Default material product that only material company can import
-        MILK, // Formula: Powdered Milk + Water + Kettle
+        MILK, // Formula: Water + Kettle
         // Machine Company
         MACHINE_MATERIAL, // Default material product that only machine company can import
-        KETTLE, // Formula: Machine Material + Water
-        MILK_FROTHER // Formula: Machine Material + Milk,
+        KETTLE // Formula: Machine Material + Water
     }
 
-    function getUint8Type(ItemType itemType) internal pure returns (uint8) {
-        return uint8(itemType);
-    }
-
-    function getItemType(uint8 itemType) internal pure returns (ItemType) {
-        return ItemType(itemType);
+    enum EventItemType {
+        UNKNOWN,
+        SUPPLY_FLUCTUATION,
+        WEATHER_VARIATION
     }
 }

@@ -1,47 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {ItemLibrary} from "../libraries/ItemLibrary.sol";
+
 interface ICAFEventItems {
-    enum EventItemType {
-        RawMaterialPriceFluctuations,
-        MarketSupplyImbalance
-    }
+    // ========================== TYPES ==========================
 
     struct EventItem {
+        ItemLibrary.EventItemType eventType;
         uint256 startDate;
         uint256 endDate;
-        uint256 eventType;
     }
 
     // ========================== ACTIONS ==========================
 
-    /// @notice Create a new event item
-    /// @param _type The type of the event item
-    /// @param _startDate The start date of the event item
-    /// @param _endDate The end date of the event item
-    /// @return The ID of the event item
-    function create(
-        EventItemType _type,
+    /// @notice Create an event item
+    /// @param _eventType The event type
+    /// @param _startDate The start date
+    /// @param _endDate The end date
+    function createEventItem(
+        ItemLibrary.EventItemType _eventType,
         uint256 _startDate,
         uint256 _endDate
-    ) external returns (uint256);
+    ) external;
 
-    /// @notice Get the info of the event item
-    /// @param _eventId The ID of the event item
-    /// @return The info of the event item
-    function get(uint256 _eventId) external view returns (EventItem memory);
+    /// @notice Get the event item
+    /// @param _eventId The event id
+    /// @return The event item
+    function getEventItem(
+        uint256 _eventId
+    ) external view returns (EventItem memory);
 
-    function start(uint256 _eventId) external;
+    function startEvent(uint256 _eventId) external;
 
-    function end(uint256 _eventId) external;
+    function endEvent(uint256 _eventId) external;
 
     // ========================== EVENTS ==========================
 
     event EventItemCreated(
         uint256 indexed eventId,
-        uint256 indexed eventType,
-        uint256 startDate,
-        uint256 endDate
+        ItemLibrary.EventItemType eventType
     );
     event EventItemStarted(uint256 indexed eventId);
     event EventItemEnded(uint256 indexed eventId);

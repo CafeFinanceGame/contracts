@@ -7,8 +7,8 @@ import {ICAFMarketplace} from "./ICAFMarketplace.sol";
 import {ICAFResaleStore} from "./ICAFResaleStore.sol";
 import {ICAFContractRegistry} from "../core/interfaces/ICAFContractRegistry.sol";
 import {ICAFGameEconomy} from "../core/interfaces/ICAFGameEconomy.sol";
-import {CAFProductItems} from "../core/items/CAFProductItems.sol";
 import {CAFAccessControl} from "../core/dependency/CAFAccessControl.sol";
+import {ICAFItemsManager} from "../core/interfaces/ICAFItemsManager.sol";
 
 contract CAFMarketplace is
     CAFAccessControl,
@@ -18,33 +18,34 @@ contract CAFMarketplace is
 {
     ICAFToken private _cafToken;
     ICAFGameEconomy private _gameEconomy;
-    CAFProductItems private _productItems;
+    ICAFItemsManager private _itemsManager;
 
-    mapping(uint256 => ListedItem) public override listedItems;
+    uint256 private _lastAutoListed = block.timestamp;
+
+    mapping(uint256 => ListedItem) public _listedItems;
 
     constructor(
         address _contractRegistry
     ) CAFAccessControl(_contractRegistry) {}
 
-    function setUp() external override onlyRole(ADMIN_ROLE) {
-        _productItems = CAFProductItems(
-            registry.getContractAddress(
-                uint256(
-                    ICAFContractRegistry
-                        .ContractRegistryType
-                        .CAF_PRODUCT_ITEMS_CONTRACT
-                )
-            )
+    modifier onlyOwner(uint256 _itemId) {
+        require(
+            _itemsManager.balanceOf(msg.sender, _itemId) > 0,
+            "CAFMarketplace: item does not belong to the sender"
         );
+        _;
+    }
+
+    function setUp() external override onlyRole(ADMIN_ROLE) {
         _cafToken = ICAFToken(
-            registry.getContractAddress(
+            _registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry.ContractRegistryType.CAF_TOKEN_CONTRACT
                 )
             )
         );
         _gameEconomy = ICAFGameEconomy(
-            registry.getContractAddress(
+            _registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -52,10 +53,19 @@ contract CAFMarketplace is
                 )
             )
         );
+        _itemsManager = ICAFItemsManager(
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_ITEMS_MANAGER_CONTRACT
+                )
+            )
+        );
     }
 
     function buy(uint256 _itemId) external override {
-        ListedItem storage item = listedItems[_itemId];
+        ListedItem storage item = _listedItems[_itemId];
         require(item.price > 0, "CAFMarketplace: item is not listed");
         require(
             _cafToken.balanceOf(msg.sender) >= item.price,
@@ -63,10 +73,9 @@ contract CAFMarketplace is
         );
 
         _cafToken.transferFrom(msg.sender, item.owner, item.price);
+        _itemsManager.safeTransferFrom(item.owner, msg.sender, _itemId, 1, "");
 
-        _productItems.safeTransferFrom(item.owner, msg.sender, item.id, 1, "");
-
-        delete listedItems[_itemId];
+        delete _listedItems[_itemId];
 
         emit ItemBought(_itemId, msg.sender, item.owner, item.price);
     }
@@ -77,7 +86,7 @@ contract CAFMarketplace is
     ) external override onlyOwner(_itemId) {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
-        listedItems[_itemId] = ListedItem({
+        _listedItems[_itemId] = ListedItem({
             id: _itemId,
             owner: msg.sender,
             price: _price
@@ -87,7 +96,7 @@ contract CAFMarketplace is
     }
 
     function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
-        delete listedItems[_itemId];
+        delete _listedItems[_itemId];
 
         emit ItemUnlisted(_itemId, msg.sender);
     }
@@ -98,41 +107,44 @@ contract CAFMarketplace is
     ) external override onlyOwner(_itemId) {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
-        listedItems[_itemId].price = _price;
+        _listedItems[_itemId].price = _price;
 
         emit ItemPriceUpdated(_itemId, msg.sender, _price);
     }
 
-    function sell(uint256 _itemId) external override onlyOwner(_itemId) {
-        CAFProductItems.ProductItem memory item = _productItems.get(_itemId);
+    function resell(uint256 _itemId) external override onlyOwner(_itemId) {
+        ICAFItemsManager.ProductItem memory item = _itemsManager.getProductItem(
+            _itemId
+        );
 
         require(item.expTime > block.timestamp, "CAFMarketplace: item expired");
 
-        uint256 _price = calculateResalePrice(_itemId);
+        uint256 _price = _calculateResalePrice(_itemId);
 
         require(_price > 0, "CAFMarketplace: item cannot be sold");
 
-        _productItems.safeTransferFrom(
+        _itemsManager.safeTransferFrom(
             msg.sender,
-            address(this),
+            address(_itemsManager),
             _itemId,
             1,
             ""
         );
 
-        listedItems[_itemId] = ListedItem({
+        _listedItems[_itemId] = ListedItem({
             id: _itemId,
-            owner: msg.sender,
+            owner: address(_itemsManager),
             price: _price
         });
 
         emit ItemResold(_itemId, msg.sender, _price);
     }
 
-    function calculateResalePrice(
-        uint256 _itemId
-    ) public view override returns (uint256) {
-        CAFProductItems.ProductItem memory item = _productItems.get(_itemId);
+    function _calculateResalePrice(uint256 _itemId) private returns (uint256) {
+        _itemsManager.decay(_itemId);
+        ICAFItemsManager.ProductItem memory item = _itemsManager.getProductItem(
+            _itemId
+        );
 
         if (item.expTime <= block.timestamp) {
             return 0;
@@ -159,11 +171,41 @@ contract CAFMarketplace is
         return ((_eF * _eW + _dF * _dW + _tF * _tW) * _price0) / 100;
     }
 
-    modifier onlyOwner(uint256 _itemId) {
+    function autoList() external override {
         require(
-            _productItems.balanceOf(msg.sender, _itemId) > 0,
-            "CAFMarketplace: item does not belong to the sender"
+            block.timestamp - _lastAutoListed >= 1 hours,
+            "CAFMarketplace: auto list is not available"
         );
-        _;
+
+        uint256 _listedItem = _itemsManager.popNotListedItem();
+
+        while (_listedItem != 0) {
+            if (_listedItems[_listedItem].price == 0) {
+                _listedItem = _itemsManager.popNotListedItem();
+                continue;
+            }
+
+            ICAFItemsManager.ProductItem memory item = _itemsManager
+                .getProductItem(_listedItem);
+
+            ICAFGameEconomy.ProductEconomy memory _itemEconomy = _gameEconomy
+                .getProductEconomy(item.productType);
+
+            uint256 _price = _itemEconomy.costPrice;
+
+            if (_price > 0) {
+                _listedItems[_listedItem] = ListedItem({
+                    id: _listedItem,
+                    owner: address(_itemsManager),
+                    price: _price
+                });
+
+                emit ItemListed(_listedItem, address(_itemsManager), _price);
+            }
+
+            _listedItem = _itemsManager.popNotListedItem();
+        }
+
+        _lastAutoListed = block.timestamp;
     }
 }

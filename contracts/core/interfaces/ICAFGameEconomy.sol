@@ -5,18 +5,19 @@ import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
 interface ICAFGameEconomy {
     struct ProductEconomy {
-        uint256 energy;
-        uint256 durability;
-        uint8 decayRate;
-        uint256 decayPeriod;
+        uint8 energy;
+        uint8 durability;
+        uint8 decayRatePerHour;
         uint256 costPrice;
-        uint256 insurancePrice;
-        uint256 freightPrice;
     }
 
     enum CompanyAcitivityEnergyFeeType {
         MANUFACTURE,
-        SWAP
+        BUY,
+        SELL,
+        LIST,
+        UNLIST,
+        UPDATE
     }
 
     struct ActivityEnergyFee {
@@ -44,21 +45,15 @@ interface ICAFGameEconomy {
     /// @param _productType The type of the raw material
     /// @param _energy The energy of the raw material
     /// @param _durability The durability of the raw material
-    /// @param _decayRate The decay rate of the raw material
-    /// @param _decayPeriod The decay period of the raw material
+    /// @param _decayRatePerHour The decay rate of the raw material per hour
     /// @param _costPrice The cost price of the raw material
-    /// @param _insurancePrice The insurance price of the raw material
-    /// @param _freightPrice The freight price of the raw material
     /// @return True if the raw material economy is updated
     function updateProductEconomy(
         ItemLibrary.ProductItemType _productType,
         uint256 _energy,
         uint256 _durability,
-        uint8 _decayRate,
-        uint256 _decayPeriod,
-        uint256 _costPrice,
-        uint256 _insurancePrice,
-        uint256 _freightPrice
+        uint8 _decayRatePerHour,
+        uint256 _costPrice
     ) external returns (bool);
 
     /// @notice Get the economy of product

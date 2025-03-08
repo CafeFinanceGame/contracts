@@ -9,15 +9,7 @@ interface ICAFResaleStore {
     /// The item will then be listed on the marketplace.
     /// @dev Only item owner can call this function
     /// @param _itemId The id of the item
-    function sell(uint256 _itemId) external;
-
-    /// @notice Calculate the resale price of an item.
-    /// The resale price depends on the item's experience and quality.
-    /// @param _itemId The id of the item
-    /// @return The resale price of the item
-    function calculateResalePrice(
-        uint256 _itemId
-    ) external view returns (uint256);
+    function resell(uint256 _itemId) external;
 
     // ==================== EVENTS ====================
     event ItemResold(

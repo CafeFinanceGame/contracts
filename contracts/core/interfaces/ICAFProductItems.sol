@@ -4,15 +4,24 @@ pragma solidity ^0.8.20;
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 import {ICAFConsumableItems} from "./ICAFConsumableItems.sol";
 import {ICAFManufacturableItems} from "./ICAFManufacturableItems.sol";
+import {ICAFDecayableItems} from "./ICAFDecayableItems.sol";
 
-interface ICAFProductItems is ICAFConsumableItems, ICAFManufacturableItems {
+interface ICAFProductItems is
+    ICAFDecayableItems,
+    ICAFConsumableItems,
+    ICAFManufacturableItems
+{
+    // ========================== TYPES ============================
+
     struct ProductItem {
         ItemLibrary.ProductItemType productType;
         uint256 price;
-        uint256 energy; // Energy of the item, only for consumable products
-        uint256 durability; // Durability of the item, only for machine products
+        uint8 energy; // Energy of the item, only for consumable products
+        uint8 durability; // Durability of the item, only for machine products
+        uint256 decayRatePerHour; // Decay rate per hour of the item (in amount)
         uint256 msgTime; // Manufactured time of the item
         uint256 expTime; // Expiration time of the item
+        uint256 lastDecayedTime;
     }
 
     struct ProductItemInfo {
@@ -23,55 +32,37 @@ interface ICAFProductItems is ICAFConsumableItems, ICAFManufacturableItems {
         uint256 decayPeriod;
     }
 
-    struct RawMaterialProductInfo {
+    struct RawMaterialProductItemInfo {
         ItemLibrary.ProductItemType productType;
         uint256 costPrice;
-        uint256 insurancePrice;
-        uint256 freightPrice;
+    }
+
+    struct ProductRecipe {
+        ItemLibrary.ProductItemType output;
+        ItemLibrary.ProductItemType[] inputs;
     }
 
     // ========================== ACTIONS ==========================
-    /// @notice Create a new item
+
+    /// @notice Create a new product item
     /// @param _companyId The id of the company
-    /// @param _type The type of the item
-    /// @return The id of the item
-    function create(
+    /// @param _productType The type of the product
+    function createProductItem(
         uint256 _companyId,
-        ItemLibrary.ProductItemType _type
-    ) external returns (uint256);
-
-    /// @notice Create a batch of items,
-    /// @dev Function support game manufacturer to create a batch of items
-    /// @param _type The type of the item
-    /// @param _amount The amount of the item
-    /// @return The ids of the items
-    function createBatch(
-        ItemLibrary.ProductItemType _type,
-        uint256 _amount
-    ) external returns (uint256[] memory);
-
-    /// @notice Get the info of the item
-    /// @param _id The id of the item
-    /// @return The info of the item
-    function get(uint256 _id) external view returns (ProductItem memory);
-
-    /// @notice Update the item
-    /// @param _itemId The id of the item
-    /// @param _price The price of the item
-    /// @param _energy The energy of the item
-    /// @param _durability The durability of the item
-    function updateProductItem(
-        uint256 _itemId,
-        uint256 _price,
-        uint256 _energy,
-        uint256 _durability
+        ItemLibrary.ProductItemType _productType
     ) external;
 
+    /// @notice Get the product item
+    /// @param _itemId The id of the item
+    /// @return The product item
+    function getProductItem(
+        uint256 _itemId
+    ) external view returns (ProductItem memory);
+
+    /// @notice Get all product ids
+    /// @return All product ids
+    function getAllProductItemIds() external view returns (uint256[] memory);
+
     // ========================== EVENTS ==========================
-    event ProductItemCreated(
-        uint256 indexed itemId,
-        uint256 indexed companyId,
-        uint256 indexed itemType,
-        string uri
-    );
+    event ProductItemCreated(uint256 indexed itemId, uint256 indexed companyId);
 }
