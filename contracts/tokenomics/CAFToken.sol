@@ -17,7 +17,7 @@ contract CAFToken is ICAFToken, ERC20, CAFAccessControl {
         // 80% of the total supply is minted to the system
         _mint(msg.sender, (INITIAL_SUPPLY * 20) / 100);
         _mint(
-            ICAFContractRegistry(_contractRegistry).getContractAddress(
+            _registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
@@ -27,7 +27,41 @@ contract CAFToken is ICAFToken, ERC20, CAFAccessControl {
             (INITIAL_SUPPLY * 80) / 100
         );
     }
-    
+
+    function setUp() external override onlyRole(ADMIN_ROLE) {
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MARKETPLACE_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_GAME_MANAGER_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_GAME_ECONOMY_CONTRACT
+                )
+            )
+        );
+        _grantRole(SYSTEM_ROLE, address(this));
+    }
+
     function mint(address to, uint256 amount) public override {
         require(
             hasRole(SYSTEM_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender),

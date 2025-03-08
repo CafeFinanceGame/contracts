@@ -31,6 +31,14 @@ interface ICAFEventItems {
         uint256 _eventId
     ) external view returns (EventItem memory);
 
+    /// @notice Get all event ids
+    /// @return All event ids
+    function getAllEventItemIds() external view returns (uint256[] memory);
+
+    /// @notice Get all active event ids
+    /// @return All active event ids
+    function getAllActiveEventItemIds() external view returns (uint256[] memory);
+    
     function startEvent(uint256 _eventId) external;
 
     function endEvent(uint256 _eventId) external;

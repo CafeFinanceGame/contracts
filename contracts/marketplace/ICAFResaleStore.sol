@@ -11,6 +11,12 @@ interface ICAFResaleStore {
     /// @param _itemId The id of the item
     function resell(uint256 _itemId) external;
 
+    /// @notice Calculate the resale price of an item.
+    /// The exchange value depends on the item's experience and quality.
+    /// @param _itemId The id of the item
+    /// @return The resale price of the item
+    function calculateResalePrice(uint256 _itemId) external view returns (uint256);
+
     // ==================== EVENTS ====================
     event ItemResold(
         uint256 indexed _itemId,

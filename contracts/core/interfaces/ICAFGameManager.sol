@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface ICAFGameManger {
+interface ICAFGameManager {
     /// @notice Transfer CAF token
     /// @dev Only game center can call this function
     /// @param _to The address to transfer to

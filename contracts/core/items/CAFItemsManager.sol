@@ -43,6 +43,7 @@ contract CAFItemsManager is
 
     uint256[] private _allProductItemIds;
     uint256[] private _allCompanyItemIds;
+    uint256[] private _allEventItemIds;
 
     function supportsInterface(
         bytes4 interfaceId
@@ -171,6 +172,17 @@ contract CAFItemsManager is
                 )
             )
         );
+
+        setApprovalForAll(
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MARKETPLACE_CONTRACT
+                )
+            ),
+            true
+        );
     }
 
     function getNextItemId() external view override returns (uint256) {
@@ -293,6 +305,9 @@ contract CAFItemsManager is
 
         _mint(msg.sender, _eventId, 1, "");
 
+        _allEventItemIds.push(_eventId);
+        _activeEvents[_eventId] = false;
+
         emit EventItemCreated(_eventId, _eventType);
     }
 
@@ -392,6 +407,35 @@ contract CAFItemsManager is
         uint256 _eventId
     ) external view override returns (EventItem memory) {
         return _eventItems[_eventId];
+    }
+
+    function getAllEventItemIds()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
+        return _allEventItemIds;
+    }
+
+    function getAllActiveEventItemIds()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
+        uint256[] memory _activeEventIds = new uint256[](
+            _allEventItemIds.length
+        );
+        uint256 _activeEventCount = 0;
+
+        for (uint256 i = 0; i < _allEventItemIds.length; i++) {
+            if (_activeEvents[i]) {
+                _activeEventIds[_activeEventCount++] = i;
+            }
+        }
+
+        return _activeEventIds;
     }
 
     function popNotListedItem()
@@ -613,7 +657,7 @@ contract CAFItemsManager is
         );
 
         _activeEvents[_eventId] = false;
-
+        
         emit EventItemEnded(_eventId);
     }
 

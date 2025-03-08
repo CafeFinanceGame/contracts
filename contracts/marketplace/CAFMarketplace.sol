@@ -9,6 +9,9 @@ import {ICAFContractRegistry} from "../core/interfaces/ICAFContractRegistry.sol"
 import {ICAFGameEconomy} from "../core/interfaces/ICAFGameEconomy.sol";
 import {CAFAccessControl} from "../core/dependency/CAFAccessControl.sol";
 import {ICAFItemsManager} from "../core/interfaces/ICAFItemsManager.sol";
+import {ICAFGameManager} from "../core/interfaces/ICAFGameManager.sol";
+
+import "hardhat/console.sol";
 
 contract CAFMarketplace is
     CAFAccessControl,
@@ -19,6 +22,7 @@ contract CAFMarketplace is
     ICAFToken private _cafToken;
     ICAFGameEconomy private _gameEconomy;
     ICAFItemsManager private _itemsManager;
+    ICAFGameManager private _cafGameManager;
 
     uint256 private _lastAutoListed = block.timestamp;
 
@@ -32,6 +36,14 @@ contract CAFMarketplace is
         require(
             _itemsManager.balanceOf(msg.sender, _itemId) > 0,
             "CAFMarketplace: item does not belong to the sender"
+        );
+        _;
+    }
+
+    modifier onlyNotListed(uint256 _itemId) {
+        require(
+            _listedItems[_itemId].price == 0,
+            "CAFMarketplace: item is already listed"
         );
         _;
     }
@@ -62,6 +74,15 @@ contract CAFMarketplace is
                 )
             )
         );
+        _cafGameManager = ICAFGameManager(
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_GAME_MANAGER_CONTRACT
+                )
+            )
+        );
     }
 
     function buy(uint256 _itemId) external override {
@@ -83,7 +104,7 @@ contract CAFMarketplace is
     function list(
         uint256 _itemId,
         uint256 _price
-    ) external override onlyOwner(_itemId) {
+    ) external override onlyOwner(_itemId) onlyNotListed(_itemId) {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
         _listedItems[_itemId] = ListedItem({
@@ -113,13 +134,15 @@ contract CAFMarketplace is
     }
 
     function resell(uint256 _itemId) external override onlyOwner(_itemId) {
+        _itemsManager.decay(_itemId);
+
         ICAFItemsManager.ProductItem memory item = _itemsManager.getProductItem(
             _itemId
         );
 
         require(item.expTime > block.timestamp, "CAFMarketplace: item expired");
 
-        uint256 _price = _calculateResalePrice(_itemId);
+        uint256 _price = calculateResalePrice(_itemId);
 
         require(_price > 0, "CAFMarketplace: item cannot be sold");
 
@@ -137,11 +160,14 @@ contract CAFMarketplace is
             price: _price
         });
 
+        _cafGameManager.transferToken(msg.sender, _price);
+
         emit ItemResold(_itemId, msg.sender, _price);
     }
 
-    function _calculateResalePrice(uint256 _itemId) private returns (uint256) {
-        _itemsManager.decay(_itemId);
+    function calculateResalePrice(
+        uint256 _itemId
+    ) public view override returns (uint256) {
         ICAFItemsManager.ProductItem memory item = _itemsManager.getProductItem(
             _itemId
         );
@@ -157,18 +183,20 @@ contract CAFMarketplace is
         uint256 _d0 = itemEconomy.durability;
         uint256 _exp = item.expTime;
 
-        uint256 _eF = (item.energy * 100) / _e0; // Weight 0.25
-        uint256 _eW = 25;
-
-        uint256 _dF = (item.durability * 100) / _d0; // Weight 0.25
+        uint256 _dF = (_d0 > 0) ? (uint256(item.durability) * 100) / _d0 : 0; // Weight 0.25
         uint256 _dW = 25;
 
-        uint256 _tF = ((_exp - block.timestamp) * 100) / item.expTime; // Weight 0.5
+        uint256 _eF = (_e0 > 0) ? (uint256(item.energy) * 100) / _e0 : 0; // Weight 0.25
+        uint256 _eW = 25;
+
+        uint256 _tF = (_exp > block.timestamp)
+            ? ((_exp - block.timestamp) * 100) / (_exp - item.msgTime)
+            : 0; // Weight 0.5
         uint256 _tW = 50;
 
         uint256 _price0 = _gameEconomy.getCurrentPrice(item.productType);
 
-        return ((_eF * _eW + _dF * _dW + _tF * _tW) * _price0) / 100;
+        return ((_eF * _eW + _dF * _dW + _tF * _tW) * _price0) / 10000;
     }
 
     function autoList() external override {

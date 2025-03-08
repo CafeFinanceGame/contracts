@@ -2,13 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {ICAFContractRegistry} from "../interfaces/ICAFContractRegistry.sol";
-import {ICAFGameManger} from "../interfaces/ICAFGameManager.sol";
+import {ICAFGameManager} from "../interfaces/ICAFGameManager.sol";
 import {CAFToken} from "../../tokenomics/CAFToken.sol";
 import {CAFAccessControl} from "./CAFAccessControl.sol";
 import {ICAFMaterialFactory} from "../interfaces/ICAFMaterialFactory.sol";
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
-contract CAFGameManager is ICAFGameManger, CAFAccessControl {
+contract CAFGameManager is ICAFGameManager, CAFAccessControl {
     /*
     ============================ 🌍 GAME STORY: GAME Manager ============================
     - The game manager is the core of the game, it will manage all the game logic and rules
@@ -26,6 +26,17 @@ contract CAFGameManager is ICAFGameManger, CAFAccessControl {
             _registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry.ContractRegistryType.CAF_TOKEN_CONTRACT
+                )
+            )
+        );
+
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MARKETPLACE_CONTRACT
                 )
             )
         );
