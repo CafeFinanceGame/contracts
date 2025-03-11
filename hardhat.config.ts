@@ -67,6 +67,9 @@ const config: HardhatUserConfig = {
       }
     ]
   },
+  typechain: {
+    outDir: "typechain",
+  },
   sourcify: {
     enabled: true,
   }

@@ -59,9 +59,25 @@ interface ICAFProductItems is
         uint256 _itemId
     ) external view returns (ProductItem memory);
 
+    /// @notice Get the product item info
+    /// @param _owner The owner of the product
+    /// @return The product item info
+    function getAllProductItemByOwner(
+        address _owner
+    ) external view returns (uint256[] memory);
+
     /// @notice Get all product ids
     /// @return All product ids
     function getAllProductItemIds() external view returns (uint256[] memory);
+
+    /// @notice Get the product item info
+    /// @param _itemId The id of the item
+    /// @param _itemId The id of the item
+    /// @return The product item info
+    function hasProductItem(
+        address _owner,
+        uint256 _itemId
+    ) external view returns (bool);
 
     // ========================== EVENTS ==========================
     event ProductItemCreated(uint256 indexed itemId, uint256 indexed companyId);

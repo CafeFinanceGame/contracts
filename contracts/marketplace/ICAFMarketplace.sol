@@ -29,6 +29,16 @@ interface ICAFMarketplace {
     /// @param _price The price of the item
     function updatePrice(uint256 _itemId, uint256 _price) external;
 
+    /// @notice Get all listed items
+    /// @return All listed items
+    function getAllListedItemIds() external view returns (uint256[] memory);
+
+    /// @notice Get the listed item
+    /// @param _itemId The id of the item
+    function getListedItem(
+        uint256 _itemId
+    ) external view returns (ListedItem memory);
+
     // @notice Auto list per hour
     function autoList() external;
 

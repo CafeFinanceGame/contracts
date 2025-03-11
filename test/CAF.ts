@@ -68,6 +68,7 @@ describe("All tests", function () {
         await cafGameManager.setUp();
         await cafGameEconomy.setUp();
         await cafToken.setUp();
+        await cafToken.connect(owner).init();
 
         return { cafItemsManager, contractRegistry, cafGameEconomy, cafToken, cafMarketplace, owner, otherAccount };
     }
@@ -363,9 +364,28 @@ describe("All tests", function () {
                 const productItemId = (await cafItemsManager.getAllProductItemIds())[0];
                 await cafMarketplace.connect(owner).list(productItemId, 100);
 
-                const listedItem = await cafMarketplace._listedItems(productItemId);
+                const listedItem = await cafMarketplace.getListedItem(productItemId);
                 expect(listedItem.price).to.equal(100);
                 expect(listedItem.owner).to.equal(owner.address);
+            });
+
+            it("Should unlist an item", async function () {
+                const { cafMarketplace, cafItemsManager, owner } = await loadFixture(deployCAFFixture);
+
+                await cafItemsManager.createCompanyItem(owner.address, 1);
+                const companyId = (await cafItemsManager.getAllCompanyItemIds())[1];
+                await cafItemsManager.createProductItem(companyId, 1);
+
+                const productItemId = (await cafItemsManager.getAllProductItemIds())[0];
+                await cafMarketplace.connect(owner).list(productItemId, 100);
+
+                await cafMarketplace.connect(owner).unlist(productItemId);
+
+                const listedItem = await cafMarketplace.getListedItem(productItemId);
+                expect(listedItem.price).to.equal(0);
+
+                const allListedItemIds = await cafMarketplace.getAllListedItemIds();
+                expect(allListedItemIds.length).to.equal(0);
             });
 
             it("Should buy an item", async function () {
@@ -379,7 +399,7 @@ describe("All tests", function () {
                 await cafMarketplace.connect(owner).list(productItemId, 100);
 
                 // Check list item
-                const listedItem = await cafMarketplace._listedItems(productItemId);
+                const listedItem = await cafMarketplace.getListedItem(productItemId);
                 expect(listedItem.price).to.equal(100);
                 expect(listedItem.owner).to.equal(owner.address);
 
@@ -406,7 +426,7 @@ describe("All tests", function () {
 
                 await cafMarketplace.connect(owner).updatePrice(productItemId, 200);
 
-                const listedItem = await cafMarketplace._listedItems(productItemId);
+                const listedItem = await cafMarketplace.getListedItem(productItemId);
                 expect(listedItem.price).to.equal(200);
             });
 
@@ -422,7 +442,7 @@ describe("All tests", function () {
 
                 await cafMarketplace.connect(owner).unlist(productItemId);
 
-                const listedItem = await cafMarketplace._listedItems(productItemId);
+                const listedItem = await cafMarketplace.getListedItem(productItemId);
                 expect(listedItem.price).to.equal(0);
                 expect(listedItem.owner).to.equal("0x0000000000000000000000000000000000000000");
             });
@@ -455,7 +475,7 @@ describe("All tests", function () {
                 expect(await cafItemsManager.balanceOf(owner.address, productItemId)).to.equal(0);
                 expect(afterBalance - beforeBalance).to.equal(resellPrice);
 
-                // const listedItem = await cafMarketplace._listedItems(productItemId);
+                // const listedItem = await cafMarketplace.getListedItem(productItemId);
                 // expect(listedItem.price).to.equal(resellPrice);
                 // expect(listedItem.owner).to.equal(owner.address);
             });

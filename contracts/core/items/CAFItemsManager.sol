@@ -14,8 +14,6 @@ import {CAFModuleBase} from "../dependency/CAFModuleBase.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import "hardhat/console.sol";
-
 contract CAFItemsManager is
     ICAFItemsManager,
     ERC1155,
@@ -29,15 +27,14 @@ contract CAFItemsManager is
     uint256 private _nextItemId = 1;
     uint256 private _lastProducedTime = block.timestamp;
 
-    mapping(uint256 _itemId => address) private _itemOwners;
-    mapping(uint256 _itemId => ProductItem) private _productItems;
-    mapping(uint256 _itemId => Company) private _companyItems;
-    mapping(uint256 _eventId => EventItem) private _eventItems;
-    mapping(uint256 _eventId => bool) private _activeEvents;
-    mapping(address _owner => uint256) private _ownerOwnedCompany;
+    mapping(uint256 => address) private _itemOwners;
+    mapping(uint256 => ProductItem) private _productItems;
+    mapping(uint256 => Company) private _companyItems;
+    mapping(uint256 => EventItem) private _eventItems;
+    mapping(uint256 => bool) private _activeEvents;
+    mapping(address => uint256) private _ownerOwnedCompany;
     uint256[] private _notListedItems; // only for items owned by the system
-    mapping(uint256 _companyId => uint256[] _itemIds)
-        private _companyOwnedItems;
+    mapping(uint256 => uint256[]) private _companyOwnedItems;
     mapping(ItemLibrary.ProductItemType => ProductRecipe)
         private _productRecipes;
 
@@ -388,12 +385,40 @@ contract CAFItemsManager is
         return _allProductItemIds;
     }
 
+    function getAllProductItemByOwner(
+        address _owner
+    ) external view override returns (uint256[] memory) {
+        return _companyOwnedItems[_ownerOwnedCompany[_owner]];
+    }
+
+    function hasProductItem(
+        address _owner,
+        uint256 _itemId
+    ) external view override returns (bool) {
+        return _itemOwners[_itemId] == _owner;
+    }
+
     function getCompanyItem(
         uint256 _companyId
     ) public view override returns (Company memory) {
         return _companyItems[_companyId];
     }
 
+    function getCompanyItemByOwner(
+        address _owner
+    ) external view override returns (uint256) {
+        return _ownerOwnedCompany[_owner];
+    }
+
+    function hasCompanyItem(address _owner)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _ownerOwnedCompany[_owner] != 0;
+    }
+    
     function getAllCompanyItemIds()
         external
         view
@@ -657,7 +682,7 @@ contract CAFItemsManager is
         );
 
         _activeEvents[_eventId] = false;
-        
+
         emit EventItemEnded(_eventId);
     }
 

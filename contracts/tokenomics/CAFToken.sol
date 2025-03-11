@@ -12,9 +12,9 @@ contract CAFToken is ICAFToken, ERC20, CAFAccessControl {
 
     constructor(
         address _contractRegistry
-    ) ERC20("CaFi", "CAF") CAFAccessControl(_contractRegistry) {
-        // 20% of the total supply is minted to the deployer
-        // 80% of the total supply is minted to the system
+    ) ERC20("CaFi", "CAF") CAFAccessControl(_contractRegistry) {}
+
+    function init() external onlyRole(ADMIN_ROLE) {
         _mint(msg.sender, (INITIAL_SUPPLY * 20) / 100);
         _mint(
             _registry.getContractAddress(

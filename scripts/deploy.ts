@@ -8,7 +8,7 @@ var CAF_ITEMS_MANAGER_CONTRACT_ADDRESS = "0x343e17e9Bc8a5f548a621F143A33D5a2e0Ad
 var CAF_MARKETPLACE_ADDRESS = "0x143732154690F75f25B93898a968ec9202726658"; // v
 var CAF_TOKEN_ADDRESS = "0xD23e4c0afeCf96B122bc8f03BBa051E23168827F";
 
-async function deployPart1() {
+async function deploy() {
     try {
         const CAFContractRegistry = await hre.ethers.getContractFactory("CAFContractRegistry");
         const cafContractRegistry = await CAFContractRegistry.deploy({
@@ -45,6 +45,13 @@ async function deployPart1() {
         await cafMarketplace.waitForDeployment();
         CAF_MARKETPLACE_ADDRESS = await cafMarketplace.getAddress();
         console.log("CAFMarketplace deployed to:", CAF_MARKETPLACE_ADDRESS);
+
+        const CAFToken = await hre.ethers.getContractFactory("CAFToken");
+        const cafToken = await CAFToken.deploy(CAF_CONTRACT_REGISTRY_ADDRESS);
+
+        await cafToken.waitForDeployment();
+        CAF_TOKEN_ADDRESS = await cafToken.getAddress();
+        console.log("CAFToken deployed to:", CAF_TOKEN_ADDRESS);
     } catch (error) {
         console.log(error);
     }
@@ -58,26 +65,28 @@ enum ContractRegistryType {
     CAF_ITEMS_MANAGER_CONTRACT
 }
 
-async function setUpPart1() {
+async function setUp() {
     try {
-
         const cafContractRegistry = await hre.ethers.getContractAt("CAFContractRegistry", CAF_CONTRACT_REGISTRY_ADDRESS);
 
         await cafContractRegistry.registerContract(ContractRegistryType.CAF_ITEMS_MANAGER_CONTRACT, CAF_ITEMS_MANAGER_CONTRACT_ADDRESS);
         await cafContractRegistry.registerContract(ContractRegistryType.CAF_MARKETPLACE_CONTRACT, CAF_MARKETPLACE_ADDRESS);
         await cafContractRegistry.registerContract(ContractRegistryType.CAF_GAME_MANAGER_CONTRACT, CAF_GAME_MANAGER_ADDRESS);
         await cafContractRegistry.registerContract(ContractRegistryType.CAF_GAME_ECONOMY_CONTRACT, CAF_GAME_ECONOMY_ADDRESS);
-
-        const cafGameManager = await hre.ethers.getContractAt("CAFGameManager", CAF_GAME_MANAGER_ADDRESS);
-        await cafGameManager.setUp();
-
-        const cafGameEconomy = await hre.ethers.getContractAt("CAFGameEconomy", CAF_GAME_ECONOMY_ADDRESS);
-        await cafGameEconomy.setUp();
+        await cafContractRegistry.registerContract(ContractRegistryType.CAF_TOKEN_CONTRACT, CAF_TOKEN_ADDRESS);
 
         const cafItemsManager = await hre.ethers.getContractAt("CAFItemsManager", CAF_ITEMS_MANAGER_CONTRACT_ADDRESS);
+        const cafMarketplace = await hre.ethers.getContractAt("CAFMarketplace", CAF_MARKETPLACE_ADDRESS);
+        const cafGameManager = await hre.ethers.getContractAt("CAFGameManager", CAF_GAME_MANAGER_ADDRESS);
+        const cafGameEconomy = await hre.ethers.getContractAt("CAFGameEconomy", CAF_GAME_ECONOMY_ADDRESS);
+        const cafToken = await hre.ethers.getContractAt("CAFToken", CAF_TOKEN_ADDRESS);
+
         await cafItemsManager.setUp();
-
-
+        await cafMarketplace.setUp();
+        await cafGameManager.setUp();
+        await cafGameEconomy.setUp();
+        await cafToken.setUp();
+        await cafToken.init();
     } catch (error) {
         console.log(error);
     }
@@ -85,12 +94,7 @@ async function setUpPart1() {
 
 async function deployPart2() {
     try {
-        const CAFToken = await hre.ethers.getContractFactory("CAFToken");
-        const cafToken = await CAFToken.deploy(CAF_CONTRACT_REGISTRY_ADDRESS);
 
-        await cafToken.waitForDeployment();
-        CAF_TOKEN_ADDRESS = await cafToken.getAddress();
-        console.log("CAFToken deployed to:", CAF_TOKEN_ADDRESS);
 
         const cafContractRegistry = await hre.ethers.getContractAt("CAFContractRegistry", CAF_CONTRACT_REGISTRY_ADDRESS);
         await cafContractRegistry.registerContract(ContractRegistryType.CAF_TOKEN_CONTRACT, CAF_TOKEN_ADDRESS);
@@ -99,22 +103,9 @@ async function deployPart2() {
     }
 }
 
-async function setUpAllPart2() {
-    try {
-        const cafMarketplace = await hre.ethers.getContractAt("CAFMarketplace", CAF_MARKETPLACE_ADDRESS);
-        await cafMarketplace.setUp();
-
-        const cafToken = await hre.ethers.getContractAt("CAFToken", CAF_TOKEN_ADDRESS);
-        await cafToken.setUp();
-    } catch (error) {
-        console.log(error);
-    }
-}
 async function main() {
-    await deployPart1();
-    await setUpPart1();
-    await deployPart2();
-    await setUpAllPart2();
+    await deploy();
+    await setUp();
     console.log("All contracts deployed and set up successfully");
 }
 

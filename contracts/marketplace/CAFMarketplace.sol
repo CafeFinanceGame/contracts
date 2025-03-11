@@ -11,8 +11,6 @@ import {CAFAccessControl} from "../core/dependency/CAFAccessControl.sol";
 import {ICAFItemsManager} from "../core/interfaces/ICAFItemsManager.sol";
 import {ICAFGameManager} from "../core/interfaces/ICAFGameManager.sol";
 
-import "hardhat/console.sol";
-
 contract CAFMarketplace is
     CAFAccessControl,
     ICAFMarketplace,
@@ -26,7 +24,9 @@ contract CAFMarketplace is
 
     uint256 private _lastAutoListed = block.timestamp;
 
-    mapping(uint256 => ListedItem) public _listedItems;
+    mapping(uint256 => ListedItem) private _listedItems;
+    mapping(uint256 => uint256) private _listedItemsIndex;
+    uint256[] private _allListedItemIds;
 
     constructor(
         address _contractRegistry
@@ -113,11 +113,34 @@ contract CAFMarketplace is
             price: _price
         });
 
+        _allListedItemIds.push(_itemId);
+        _listedItemsIndex[_itemId] = _allListedItemIds.length - 1;
+
         emit ItemListed(_itemId, msg.sender, _price);
     }
 
-    function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
+    function _removeItem(uint256 _itemId) internal {
+        uint256 _index = _listedItemsIndex[_itemId];
+        uint256 _lastIndex = _allListedItemIds.length - 1;
+        uint256 _lastItemId = _allListedItemIds[_lastIndex];
+
+        if (_index != _lastIndex) {
+            _allListedItemIds[_index] = _lastItemId;
+            _listedItemsIndex[_lastItemId] = _index;
+        }
+
+        _allListedItemIds.pop();
         delete _listedItems[_itemId];
+        delete _listedItemsIndex[_itemId];
+    }
+
+    function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
+        require(
+            _listedItems[_itemId].price > 0,
+            "CAFMarketplace: item is not listed"
+        );
+
+        _removeItem(_itemId);
 
         emit ItemUnlisted(_itemId, msg.sender);
     }
@@ -210,6 +233,10 @@ contract CAFMarketplace is
         while (_listedItem != 0) {
             if (_listedItems[_listedItem].price == 0) {
                 _listedItem = _itemsManager.popNotListedItem();
+                if (_listedItem == 0) {
+                    break;
+                }
+
                 continue;
             }
 
@@ -232,8 +259,31 @@ contract CAFMarketplace is
             }
 
             _listedItem = _itemsManager.popNotListedItem();
+
+            if (block.timestamp - _lastAutoListed >= 1 hours) {
+                break;
+            }
+
+            if (_listedItem == 0) {
+                break;
+            }
         }
 
         _lastAutoListed = block.timestamp;
+    }
+
+    function getAllListedItemIds()
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
+        return _allListedItemIds;
+    }
+
+    function getListedItem(
+        uint256 _itemId
+    ) external view override returns (ListedItem memory) {
+        return _listedItems[_itemId];
     }
 }
