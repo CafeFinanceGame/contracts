@@ -13,6 +13,9 @@ interface ICAFMaterialFactory {
         uint256 _rateProducedPerHour // The rate produced per hour
     ) external;
 
+    /// @notice Auto manufacture product, game center will call this function to manufacture product
+    function autoProduceProducts() external;
+
     // ========================= EVENTS =========================
     event ProductsProduced(
         ItemLibrary.ProductItemType _productType,

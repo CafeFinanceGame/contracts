@@ -158,12 +158,11 @@ describe("All tests", function () {
             it("Should produce batch products items for contract manager", async function () {
                 const { cafItemsManager, owner, cafGameEconomy } = await loadFixture(deployCAFFixture);
 
-                await cafItemsManager.connect(owner).createCompanyItem(owner.address, 1); // Assuming 1 is a valid CompanyType
-
                 await time.increase(3600 + 1);
 
-                const productType = 1;
-                await cafItemsManager.produceProducts(productType, 10); // Assuming 1 is a valid ProductItemType
+                const productType = ProductItemType.WATER;
+                const produceRatePerHour = 10;
+                await cafItemsManager.produceProducts(productType, produceRatePerHour);
                 const productItems = await cafItemsManager.getAllProductItemIds();
 
                 expect(productItems.length).to.equal(10);
@@ -172,11 +171,24 @@ describe("All tests", function () {
                     const productEconomy = await cafGameEconomy.getProductEconomy(productType);
 
                     expect(await cafItemsManager.balanceOf(await cafItemsManager.getAddress(), productItems[i])).to.equal(1);
-                    expect(productItem.productType).to.equal(1);
+                    expect(productItem.productType).to.equal(productType);
                     expect(productItem.energy).to.equal(productEconomy.energy);
                     expect(productItem.durability).to.equal(productEconomy.durability);
                     expect(productItem.decayRatePerHour).to.equal(productEconomy.decayRatePerHour);
                 }
+
+                // try create product with createProductItem after produceProducts
+                await cafItemsManager.createProductItem(1, ProductItemType.WATER);
+                const productItemIds = await cafItemsManager.getAllProductItemIds();
+                expect(productItemIds.length).to.equal(11);
+                
+                const productItem = await cafItemsManager.getProductItem(productItemIds[10]);
+                const productEconomy = await cafGameEconomy.getProductEconomy(ProductItemType.COFFEE_BEAN);
+
+                expect(await cafItemsManager.balanceOf(await cafItemsManager.getAddress(), productItemIds[10])).to.equal(1);
+                expect(productItem.productType).to.equal(ProductItemType.WATER);
+                expect(productItem.energy).to.equal(productEconomy.energy);
+                expect(productItem.durability).to.equal(productEconomy.durability);
             });
 
             it("Should decay product items over time", async function () {
@@ -474,10 +486,23 @@ describe("All tests", function () {
 
                 expect(await cafItemsManager.balanceOf(owner.address, productItemId)).to.equal(0);
                 expect(afterBalance - beforeBalance).to.equal(resellPrice);
+            });
+        });
+        describe("Auto", function () {
+            it("Should auto list an item", async function () {
+                const { cafMarketplace, cafItemsManager } = await loadFixture(deployCAFFixture);
 
-                // const listedItem = await cafMarketplace.getListedItem(productItemId);
-                // expect(listedItem.price).to.equal(resellPrice);
-                // expect(listedItem.owner).to.equal(owner.address);
+                const produceRatePerHour = 3;
+                const productType = ProductItemType.COFFEE_BEAN;
+
+                await time.increase(3600 * 2);
+
+                await cafItemsManager.produceProducts(productType, produceRatePerHour);
+
+                await cafMarketplace.autoList();
+
+                const listedItemIds = await cafMarketplace.getAllListedItemIds();
+                expect(listedItemIds.length).to.equal(produceRatePerHour * 2);
             });
         });
     });

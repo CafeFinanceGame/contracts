@@ -33,11 +33,11 @@ contract CAFItemsManager is
     mapping(uint256 => EventItem) private _eventItems;
     mapping(uint256 => bool) private _activeEvents;
     mapping(address => uint256) private _ownerOwnedCompany;
-    uint256[] private _notListedItems; // only for items owned by the system
     mapping(uint256 => uint256[]) private _companyOwnedItems;
     mapping(ItemLibrary.ProductItemType => ProductRecipe)
         private _productRecipes;
 
+    uint256[] private _notListedItems; // only for items owned by the system
     uint256[] private _allProductItemIds;
     uint256[] private _allCompanyItemIds;
     uint256[] private _allEventItemIds;
@@ -64,7 +64,7 @@ contract CAFItemsManager is
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(SYSTEM_ROLE, address(this));
 
-        createCompanyItem(
+        _createCompanyItem(
             address(this),
             ItemLibrary.CompanyType.FACTORY_COMPANY
         );
@@ -160,6 +160,16 @@ contract CAFItemsManager is
     }
 
     function setUp() external override onlyRole(ADMIN_ROLE) {
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
+                        .CAF_MARKETPLACE_CONTRACT
+                )
+            )
+        );
         _gameEconomy = ICAFGameEconomy(
             _registry.getContractAddress(
                 uint256(
@@ -197,7 +207,7 @@ contract CAFItemsManager is
     function _createProductItem(
         uint256 _companyId,
         ProductItem memory _productItem
-    ) private onlyCompanyExists(_companyId) returns (uint256) {
+    ) private onlyCompanyExists(_companyId) returns (uint256, address) {
         Company memory _company = getCompanyItem(_companyId);
         uint256 _productId = _nextItemId++;
 
@@ -207,9 +217,9 @@ contract CAFItemsManager is
         _itemOwners[_productId] = _company.owner;
         _allProductItemIds.push(_productId);
 
-        _mint(_company.owner, _productId, 1, "");
+        // _mint(_company.owner, _productId, 1, "");
 
-        return _productId;
+        return (_productId, _company.owner);
     }
 
     function createProductItem(
@@ -222,7 +232,7 @@ contract CAFItemsManager is
         uint256 _unit = (_productEconomy.energy > 0)
             ? _productEconomy.energy
             : _productEconomy.durability;
-        uint256 _productId = _createProductItem(
+        (uint256 _productId, address _owner) = _createProductItem(
             _companyId,
             ProductItem({
                 productType: _productType,
@@ -240,13 +250,15 @@ contract CAFItemsManager is
             })
         );
 
+        _mint(_owner, _productId, 1, "");
+
         emit ProductItemCreated(_productId, _companyId);
     }
 
-    function createCompanyItem(
+    function _createCompanyItem(
         address _owner,
         ItemLibrary.CompanyType _role
-    ) public override {
+    ) internal returns (uint256) {
         require(
             _role != ItemLibrary.CompanyType.UNKNOWN,
             "CAFItemsManager: Company role must be a valid role"
@@ -285,6 +297,15 @@ contract CAFItemsManager is
         _mint(_owner, _companyId, 1, "");
 
         emit CompanyItemCreated(_nextItemId, _owner);
+
+        return _companyId;
+    }
+
+    function createCompanyItem(
+        address _owner,
+        ItemLibrary.CompanyType _role
+    ) public override {
+        _createCompanyItem(_owner, _role);
     }
 
     function createEventItem(
@@ -340,29 +361,49 @@ contract CAFItemsManager is
         uint256[] memory _minBatchValues = new uint256[](_quantityProduced);
 
         for (uint256 i = 0; i < _quantityProduced; i++) {
-            uint256 _productId = _nextItemId++;
+            // uint256 _productId = _nextItemId++;
 
-            _minBatchValues[i] = 1;
-            _productItems[_productId] = ProductItem({
-                productType: _productType,
-                price: 0,
-                energy: _productEconomy.energy,
-                durability: _productEconomy.durability,
-                decayRatePerHour: _productEconomy.decayRatePerHour,
-                msgTime: block.timestamp,
-                expTime: _calculateExpTime(
-                    _productEconomy.energy,
-                    block.timestamp,
-                    _productEconomy.decayRatePerHour
-                ),
-                lastDecayedTime: block.timestamp
-            });
+            // _productItems[_productId] = ProductItem({
+            //     productType: _productType,
+            //     price: 0,
+            //     energy: _productEconomy.energy,
+            //     durability: _productEconomy.durability,
+            //     decayRatePerHour: _productEconomy.decayRatePerHour,
+            //     msgTime: block.timestamp,
+            //     expTime: _calculateExpTime(
+            //         _productEconomy.energy,
+            //         block.timestamp,
+            //         _productEconomy.decayRatePerHour
+            //     ),
+            //     lastDecayedTime: block.timestamp
+            // });
+
+            // _productIds[i] = _productId;
+            // _allProductItemIds.push(_productId);
+
+            (uint256 _productId, address _owner) = _createProductItem(
+                _ownerOwnedCompany[address(this)],
+                ProductItem({
+                    productType: _productType,
+                    price: 0,
+                    energy: _productEconomy.energy,
+                    durability: _productEconomy.durability,
+                    decayRatePerHour: _productEconomy.decayRatePerHour,
+                    msgTime: block.timestamp,
+                    expTime: _calculateExpTime(
+                        _productEconomy.energy,
+                        block.timestamp,
+                        _productEconomy.decayRatePerHour
+                    ),
+                    lastDecayedTime: block.timestamp
+                })
+            );
 
             _productIds[i] = _productId;
-            _allProductItemIds.push(_productId);
+            _minBatchValues[i] = 1;
             _notListedItems.push(_productId);
 
-            emit ProductItemCreated(_productId, 0);
+            emit ProductItemCreated(_productId, _ownerOwnedCompany[_owner]);
         }
 
         _mintBatch(address(this), _productIds, _minBatchValues, "");
@@ -410,15 +451,12 @@ contract CAFItemsManager is
         return _ownerOwnedCompany[_owner];
     }
 
-    function hasCompanyItem(address _owner)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function hasCompanyItem(
+        address _owner
+    ) external view override returns (bool) {
         return _ownerOwnedCompany[_owner] != 0;
     }
-    
+
     function getAllCompanyItemIds()
         external
         view
@@ -463,21 +501,24 @@ contract CAFItemsManager is
         return _activeEventIds;
     }
 
+    function _popNotListedItem() internal returns (uint256) {
+        uint256 _listedItemId = _notListedItems[_notListedItems.length - 1];
+        _notListedItems.pop();
+
+        return _listedItemId;
+    }
+
     function popNotListedItem()
         external
         override
         onlyHasAccess
         returns (uint256)
     {
-        require(
-            _notListedItems.length > 0,
-            "CAFItemsManager: no not listed items available"
-        );
+        if (_notListedItems.length == 0) {
+            return 0;
+        }
 
-        uint256 _itemId = _notListedItems[_notListedItems.length - 1];
-        _notListedItems.pop();
-
-        return _itemId;
+        return _popNotListedItem();
     }
 
     function _calculateEnergy(
@@ -573,7 +614,7 @@ contract CAFItemsManager is
             ? _calculateDurability(_componentIds)
             : _productEconomy.durability;
 
-        _createProductItem(
+        (uint256 _productId, address _owner) = _createProductItem(
             _ownerOwnedCompany[msg.sender],
             ProductItem({
                 productType: _productType,
@@ -590,6 +631,8 @@ contract CAFItemsManager is
                 lastDecayedTime: block.timestamp
             })
         );
+
+        _mint(_owner, _productId, 1, "");
 
         uint256 _activityFee = _gameEconomy
             .getActivityFee(
@@ -726,4 +769,6 @@ contract CAFItemsManager is
 
         return _decayAmount;
     }
+
+    function autoProduceProducts() external override {}
 }

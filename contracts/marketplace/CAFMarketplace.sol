@@ -28,9 +28,9 @@ contract CAFMarketplace is
     mapping(uint256 => uint256) private _listedItemsIndex;
     uint256[] private _allListedItemIds;
 
-    constructor(
-        address _contractRegistry
-    ) CAFAccessControl(_contractRegistry) {}
+    constructor(address _contractRegistry) CAFAccessControl(_contractRegistry) {
+        _grantRole(SYSTEM_ROLE, address(this));
+    }
 
     modifier onlyOwner(uint256 _itemId) {
         require(
@@ -101,10 +101,7 @@ contract CAFMarketplace is
         emit ItemBought(_itemId, msg.sender, item.owner, item.price);
     }
 
-    function list(
-        uint256 _itemId,
-        uint256 _price
-    ) external override onlyOwner(_itemId) onlyNotListed(_itemId) {
+    function _list(uint256 _itemId, uint256 _price) internal {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
         _listedItems[_itemId] = ListedItem({
@@ -117,6 +114,13 @@ contract CAFMarketplace is
         _listedItemsIndex[_itemId] = _allListedItemIds.length - 1;
 
         emit ItemListed(_itemId, msg.sender, _price);
+    }
+
+    function list(
+        uint256 _itemId,
+        uint256 _price
+    ) external override onlyOwner(_itemId) onlyNotListed(_itemId) {
+        _list(_itemId, _price);
     }
 
     function _removeItem(uint256 _itemId) internal {
@@ -134,7 +138,7 @@ contract CAFMarketplace is
         delete _listedItemsIndex[_itemId];
     }
 
-    function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
+    function _unlist(uint256 _itemId) internal {
         require(
             _listedItems[_itemId].price > 0,
             "CAFMarketplace: item is not listed"
@@ -143,6 +147,10 @@ contract CAFMarketplace is
         _removeItem(_itemId);
 
         emit ItemUnlisted(_itemId, msg.sender);
+    }
+
+    function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
+        _unlist(_itemId);
     }
 
     function updatePrice(
@@ -228,43 +236,22 @@ contract CAFMarketplace is
             "CAFMarketplace: auto list is not available"
         );
 
-        uint256 _listedItem = _itemsManager.popNotListedItem();
+        uint256 _listedItemId = _itemsManager.popNotListedItem();
 
-        while (_listedItem != 0) {
-            if (_listedItems[_listedItem].price == 0) {
-                _listedItem = _itemsManager.popNotListedItem();
-                if (_listedItem == 0) {
-                    break;
-                }
-
-                continue;
-            }
-
-            ICAFItemsManager.ProductItem memory item = _itemsManager
-                .getProductItem(_listedItem);
+        while (_listedItemId != 0) {
+            ICAFItemsManager.ProductItem memory _item = _itemsManager
+                .getProductItem(_listedItemId);
 
             ICAFGameEconomy.ProductEconomy memory _itemEconomy = _gameEconomy
-                .getProductEconomy(item.productType);
+                .getProductEconomy(_item.productType);
 
             uint256 _price = _itemEconomy.costPrice;
 
-            if (_price > 0) {
-                _listedItems[_listedItem] = ListedItem({
-                    id: _listedItem,
-                    owner: address(_itemsManager),
-                    price: _price
-                });
+            _list(_listedItemId, _price);
 
-                emit ItemListed(_listedItem, address(_itemsManager), _price);
-            }
+            _listedItemId = _itemsManager.popNotListedItem();
 
-            _listedItem = _itemsManager.popNotListedItem();
-
-            if (block.timestamp - _lastAutoListed >= 1 hours) {
-                break;
-            }
-
-            if (_listedItem == 0) {
+            if (_listedItemId == 0) {
                 break;
             }
         }
