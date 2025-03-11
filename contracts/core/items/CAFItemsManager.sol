@@ -200,10 +200,10 @@ contract CAFItemsManager is
 
     function _calculateExpTime(
         uint256 _unit,
-        uint256 _msgTime,
+        uint256 _mfgTime,
         uint256 _decayRatePerHour
     ) private pure returns (uint256) {
-        return _msgTime + ((1 hours) * _unit) / _decayRatePerHour;
+        return _mfgTime + ((1 hours) * _unit) / _decayRatePerHour;
     }
 
     function _createProductItem(
@@ -240,7 +240,7 @@ contract CAFItemsManager is
                 energy: _productEconomy.energy,
                 durability: _productEconomy.durability,
                 decayRatePerHour: _productEconomy.decayRatePerHour,
-                msgTime: block.timestamp,
+                mfgTime: block.timestamp,
                 expTime: _calculateExpTime(
                     _unit,
                     block.timestamp,
@@ -361,7 +361,7 @@ contract CAFItemsManager is
                     energy: _productEconomy.energy,
                     durability: _productEconomy.durability,
                     decayRatePerHour: _productEconomy.decayRatePerHour,
-                    msgTime: block.timestamp,
+                    mfgTime: block.timestamp,
                     expTime: _calculateExpTime(
                         _productEconomy.energy,
                         block.timestamp,
@@ -594,7 +594,7 @@ contract CAFItemsManager is
                 energy: _energy,
                 durability: _durability,
                 decayRatePerHour: _productEconomy.decayRatePerHour,
-                msgTime: block.timestamp,
+                mfgTime: block.timestamp,
                 expTime: _calculateExpTime(
                     _energy,
                     block.timestamp,
@@ -606,7 +606,7 @@ contract CAFItemsManager is
 
         _mint(_owner, _productId, 1, "");
 
-        uint256 _activityFee = _gameEconomy
+        uint8 _activityFee = _gameEconomy
             .getActivityFee(
                 ICAFGameEconomy.CompanyAcitivityEnergyFeeType.MANUFACTURE
             )

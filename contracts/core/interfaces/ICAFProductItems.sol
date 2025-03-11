@@ -19,7 +19,7 @@ interface ICAFProductItems is
         uint8 energy; // Energy of the item, only for consumable products
         uint8 durability; // Durability of the item, only for machine products
         uint256 decayRatePerHour; // Decay rate per hour of the item (in amount)
-        uint256 msgTime; // Manufactured time of the item
+        uint256 mfgTime; // Manufactured time of the item
         uint256 expTime; // Expiration time of the item
         uint256 lastDecayedTime;
     }

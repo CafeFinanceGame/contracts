@@ -434,6 +434,8 @@ describe("All tests", function () {
                 const { cafMarketplace, cafItemsManager, cafToken, owner, otherAccount } = await loadFixture(deployCAFFixture);
 
                 await cafItemsManager.createCompanyItem(owner.address, 1);
+                await cafItemsManager.createCompanyItem(otherAccount.address, 1);
+
                 const companyId = (await cafItemsManager.getAllCompanyItemIds())[1];
                 await cafItemsManager.createProductItem(companyId, 1);
 

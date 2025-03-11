@@ -11,6 +11,8 @@ import {CAFAccessControl} from "../core/dependency/CAFAccessControl.sol";
 import {ICAFItemsManager} from "../core/interfaces/ICAFItemsManager.sol";
 import {ICAFGameManager} from "../core/interfaces/ICAFGameManager.sol";
 
+import "hardhat/console.sol";
+
 contract CAFMarketplace is
     CAFAccessControl,
     ICAFMarketplace,
@@ -44,6 +46,14 @@ contract CAFMarketplace is
         require(
             _listedItems[_itemId].price == 0,
             "CAFMarketplace: item is already listed"
+        );
+        _;
+    }
+
+    modifier onlyHasCompanyItem() {
+        require(
+            _itemsManager.getCompanyItemByOwner(msg.sender) != 0,
+            "CAFMarketplace: company item does not exist"
         );
         _;
     }
@@ -85,18 +95,31 @@ contract CAFMarketplace is
         );
     }
 
-    function buy(uint256 _itemId) external override {
+    function buy(uint256 _itemId) external override onlyHasCompanyItem {
         ListedItem storage item = _listedItems[_itemId];
         require(item.price > 0, "CAFMarketplace: item is not listed");
         require(
             _cafToken.balanceOf(msg.sender) >= item.price,
             "CAFMarketplace: insufficient balance"
         );
+        require(
+            _cafToken.allowance(msg.sender, address(this)) >= item.price,
+            "CAFMarketplace: insufficient allowance"
+        );
 
         _cafToken.transferFrom(msg.sender, item.owner, item.price);
         _itemsManager.safeTransferFrom(item.owner, msg.sender, _itemId, 1, "");
 
-        delete _listedItems[_itemId];
+        _removeItem(_itemId);
+
+        uint8 _activityFee = _gameEconomy
+            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.BUY)
+            .fee;
+
+        _itemsManager.useEnergy(
+            _itemsManager.getCompanyItemByOwner(msg.sender),
+            _activityFee
+        );
 
         emit ItemBought(_itemId, msg.sender, item.owner, item.price);
     }
@@ -119,8 +142,23 @@ contract CAFMarketplace is
     function list(
         uint256 _itemId,
         uint256 _price
-    ) external override onlyOwner(_itemId) onlyNotListed(_itemId) {
+    )
+        external
+        override
+        onlyHasCompanyItem
+        onlyOwner(_itemId)
+        onlyNotListed(_itemId)
+    {
+        _itemsManager.decay(_itemId);
         _list(_itemId, _price);
+        uint8 _activityFee = _gameEconomy
+            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.BUY)
+            .fee;
+
+        _itemsManager.useEnergy(
+            _itemsManager.getCompanyItemByOwner(msg.sender),
+            _activityFee
+        );
     }
 
     function _removeItem(uint256 _itemId) internal {
@@ -149,22 +187,48 @@ contract CAFMarketplace is
         emit ItemUnlisted(_itemId, msg.sender);
     }
 
-    function unlist(uint256 _itemId) external override onlyOwner(_itemId) {
+    function unlist(
+        uint256 _itemId
+    ) external override onlyHasCompanyItem onlyOwner(_itemId) {
+        _itemsManager.decay(_itemId);
         _unlist(_itemId);
+        uint8 _activityFee = _gameEconomy
+            .getActivityFee(
+                ICAFGameEconomy.CompanyAcitivityEnergyFeeType.UNLIST
+            )
+            .fee;
+
+        _itemsManager.useEnergy(
+            _itemsManager.getCompanyItemByOwner(msg.sender),
+            _activityFee
+        );
     }
 
     function updatePrice(
         uint256 _itemId,
         uint256 _price
-    ) external override onlyOwner(_itemId) {
+    ) external override onlyHasCompanyItem onlyOwner(_itemId) {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
         _listedItems[_itemId].price = _price;
 
+        uint8 _activityFee = _gameEconomy
+            .getActivityFee(
+                ICAFGameEconomy.CompanyAcitivityEnergyFeeType.UPDATE
+            )
+            .fee;
+
+        _itemsManager.useEnergy(
+            _itemsManager.getCompanyItemByOwner(msg.sender),
+            _activityFee
+        );
+
         emit ItemPriceUpdated(_itemId, msg.sender, _price);
     }
 
-    function resell(uint256 _itemId) external override onlyOwner(_itemId) {
+    function resell(
+        uint256 _itemId
+    ) external override onlyHasCompanyItem onlyOwner(_itemId) {
         _itemsManager.decay(_itemId);
 
         ICAFItemsManager.ProductItem memory item = _itemsManager.getProductItem(
@@ -192,6 +256,15 @@ contract CAFMarketplace is
         });
 
         _cafGameManager.transferToken(msg.sender, _price);
+
+        uint8 _activityFee = _gameEconomy
+            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.SELL)
+            .fee;
+
+        _itemsManager.useEnergy(
+            _itemsManager.getCompanyItemByOwner(msg.sender),
+            _activityFee
+        );
 
         emit ItemResold(_itemId, msg.sender, _price);
     }
@@ -221,7 +294,7 @@ contract CAFMarketplace is
         uint256 _eW = 25;
 
         uint256 _tF = (_exp > block.timestamp)
-            ? ((_exp - block.timestamp) * 100) / (_exp - item.msgTime)
+            ? ((_exp - block.timestamp) * 100) / (_exp - item.mfgTime)
             : 0; // Weight 0.5
         uint256 _tW = 50;
 
