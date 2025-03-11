@@ -62,13 +62,13 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
 
         _manufacturedProducts[
             ItemLibrary.ProductItemType.COFFEE_BEAN
-        ] = ManufacturedProduct(10);
+        ] = ManufacturedProduct(2);
         _manufacturedProducts[
             ItemLibrary.ProductItemType.WATER
-        ] = ManufacturedProduct(30);
+        ] = ManufacturedProduct(3);
         _manufacturedProducts[
             ItemLibrary.ProductItemType.MACHINE_MATERIAL
-        ] = ManufacturedProduct(5);
+        ] = ManufacturedProduct(1);
 
         _activityFees[CompanyAcitivityEnergyFeeType.MANUFACTURE] = ActivityEnergyFee(
             CompanyAcitivityEnergyFeeType.MANUFACTURE,

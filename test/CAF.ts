@@ -153,7 +153,12 @@ describe("All tests", function () {
                 expect(productItem.energy).to.equal(productEconomy.energy);
                 expect(productItem.durability).to.equal(productEconomy.durability);
                 expect(productItem.decayRatePerHour).to.equal(productEconomy.decayRatePerHour);
+
+                const allProductItemsOfOwner = await cafItemsManager.getAllProductItemByOwner(owner.address);
+
+                expect(allProductItemsOfOwner.length).to.equal(1);
             });
+
 
             it("Should produce batch products items for contract manager", async function () {
                 const { cafItemsManager, owner, cafGameEconomy } = await loadFixture(deployCAFFixture);
@@ -181,7 +186,7 @@ describe("All tests", function () {
                 await cafItemsManager.createProductItem(1, ProductItemType.WATER);
                 const productItemIds = await cafItemsManager.getAllProductItemIds();
                 expect(productItemIds.length).to.equal(11);
-                
+
                 const productItem = await cafItemsManager.getProductItem(productItemIds[10]);
                 const productEconomy = await cafGameEconomy.getProductEconomy(ProductItemType.COFFEE_BEAN);
 
@@ -321,6 +326,31 @@ describe("All tests", function () {
                 await cafItemsManager.connect(owner).replenishEnergy(companyId, coffeeId);
 
                 expect((await cafItemsManager.getCompanyItem(companyId)).energy).to.equal(100);
+            });
+
+            it("Should auto produce product items", async function () {
+                const { cafItemsManager, owner, cafGameEconomy } = await loadFixture(deployCAFFixture);
+
+                // 3 productEconomy COFFEE_BEAN, WATER, MACHINE_MATERIAL
+                const coffeeBeanEconomy = await cafGameEconomy.getManufacturedProduct(ProductItemType.COFFEE_BEAN);
+                const waterEconomy = await cafGameEconomy.getManufacturedProduct(ProductItemType.WATER);
+                const machineMaterialEconomy = await cafGameEconomy.getManufacturedProduct(ProductItemType.MACHINE_MATERIAL);
+
+                const timePassed = 3600 * 2;
+                await time.increase(timePassed);
+
+                await cafItemsManager.autoProduceProducts();
+                const expectedQuantity = Number(coffeeBeanEconomy[0]) * timePassed / 3600 + Number(waterEconomy[0]) * timePassed / 3600 + Number(machineMaterialEconomy[0]) * timePassed / 3600;
+
+                const productItems = await cafItemsManager.getAllProductItemIds();
+                expect(productItems.length).to.equal(expectedQuantity);
+
+                await time.increase(timePassed * 4);
+
+                await cafItemsManager.autoProduceProducts();
+
+                const productItemsAfter = await cafItemsManager.getAllProductItemIds();
+                expect(productItemsAfter.length).to.equal(expectedQuantity * 5);
             });
         });
 

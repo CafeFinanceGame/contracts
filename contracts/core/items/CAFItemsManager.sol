@@ -14,6 +14,8 @@ import {CAFModuleBase} from "../dependency/CAFModuleBase.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+import "hardhat/console.sol";
+
 contract CAFItemsManager is
     ICAFItemsManager,
     ERC1155,
@@ -217,8 +219,6 @@ contract CAFItemsManager is
         _itemOwners[_productId] = _company.owner;
         _allProductItemIds.push(_productId);
 
-        // _mint(_company.owner, _productId, 1, "");
-
         return (_productId, _company.owner);
     }
 
@@ -332,7 +332,7 @@ contract CAFItemsManager is
     function produceProducts(
         ItemLibrary.ProductItemType _productType,
         uint256 _rateProducedPerHour // The rate produced per hour
-    ) external override onlyHasAccess {
+    ) public override onlyHasAccess {
         require(
             _rateProducedPerHour > 0,
             "CAFItemsManager: rate produced per hour must be greater than zero"
@@ -342,17 +342,9 @@ contract CAFItemsManager is
             "CAFItemsManager: product type must be a valid product type"
         );
 
-        require(
-            block.timestamp >= _lastProducedTime + 1 hours,
-            "CAFItemsManager: cannot produce products before the next hour"
-        );
-
         uint256 _deltaT = block.timestamp - _lastProducedTime;
         uint256 _quantityProduced = (_deltaT * _rateProducedPerHour) /
             (1 hours);
-        _lastProducedTime +=
-            (_quantityProduced * 1 hours) /
-            _rateProducedPerHour;
 
         ICAFGameEconomy.ProductEconomy memory _productEconomy = _gameEconomy
             .getProductEconomy(_productType);
@@ -361,26 +353,6 @@ contract CAFItemsManager is
         uint256[] memory _minBatchValues = new uint256[](_quantityProduced);
 
         for (uint256 i = 0; i < _quantityProduced; i++) {
-            // uint256 _productId = _nextItemId++;
-
-            // _productItems[_productId] = ProductItem({
-            //     productType: _productType,
-            //     price: 0,
-            //     energy: _productEconomy.energy,
-            //     durability: _productEconomy.durability,
-            //     decayRatePerHour: _productEconomy.decayRatePerHour,
-            //     msgTime: block.timestamp,
-            //     expTime: _calculateExpTime(
-            //         _productEconomy.energy,
-            //         block.timestamp,
-            //         _productEconomy.decayRatePerHour
-            //     ),
-            //     lastDecayedTime: block.timestamp
-            // });
-
-            // _productIds[i] = _productId;
-            // _allProductItemIds.push(_productId);
-
             (uint256 _productId, address _owner) = _createProductItem(
                 _ownerOwnedCompany[address(this)],
                 ProductItem({
@@ -770,5 +742,32 @@ contract CAFItemsManager is
         return _decayAmount;
     }
 
-    function autoProduceProducts() external override {}
+    function autoProduceProducts() external override onlyHasAccess {
+        require(
+            _lastProducedTime + 1 hours <= block.timestamp,
+            "CAFItemsManager: Products are already being produced"
+        );
+
+        ItemLibrary.ProductItemType[]
+            memory _productTypes = new ItemLibrary.ProductItemType[](3);
+
+        _productTypes[0] = ItemLibrary.ProductItemType.COFFEE_BEAN;
+        _productTypes[1] = ItemLibrary.ProductItemType.WATER;
+        _productTypes[2] = ItemLibrary.ProductItemType.MACHINE_MATERIAL;
+
+        for (uint256 i = 0; i < _productTypes.length; i++) {
+            ICAFGameEconomy.ManufacturedProduct
+                memory _manufacturedProductEconomy = _gameEconomy
+                    .getManufacturedProduct(_productTypes[i]);
+            uint256 _economyRate = _manufacturedProductEconomy
+                .manufacturedPerHour;
+
+            produceProducts(
+                ItemLibrary.ProductItemType(_productTypes[i]),
+                _economyRate
+            );
+        }
+
+        _lastProducedTime = block.timestamp;
+    }
 }
