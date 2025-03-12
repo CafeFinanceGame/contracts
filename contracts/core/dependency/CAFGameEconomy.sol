@@ -24,26 +24,26 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
         _products[ItemLibrary.ProductItemType.COFFEE_BEAN] = ProductEconomy(
             80,
             0,
-            2,
+            4,
             5
         );
         _products[ItemLibrary.ProductItemType.COFFEE] = ProductEconomy(
             100,
             0,
-            3,
+            8,
             10
         );
 
         _products[ItemLibrary.ProductItemType.MILK] = ProductEconomy(
             100,
             0,
-            4,
+            8,
             8
         );
         _products[ItemLibrary.ProductItemType.WATER] = ProductEconomy(
             80,
             0,
-            2,
+            4,
             3
         );
         _products[ItemLibrary.ProductItemType.KETTLE] = ProductEconomy(
@@ -80,8 +80,8 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
             2
         );
 
-        _activityFees[CompanyAcitivityEnergyFeeType.SELL] = ActivityEnergyFee(
-            CompanyAcitivityEnergyFeeType.SELL,
+        _activityFees[CompanyAcitivityEnergyFeeType.RESELL] = ActivityEnergyFee(
+            CompanyAcitivityEnergyFeeType.RESELL,
             2
         );
 

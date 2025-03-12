@@ -31,7 +31,7 @@ contract CAFItemsManager is
 
     mapping(uint256 => address) private _itemOwners;
     mapping(uint256 => ProductItem) private _productItems;
-    mapping(uint256 => Company) private _companyItems;
+    mapping(uint256 => CompanyItem) private _companyItems;
     mapping(uint256 => EventItem) private _eventItems;
     mapping(uint256 => bool) private _activeEvents;
     mapping(address => uint256) private _ownerOwnedCompany;
@@ -201,16 +201,16 @@ contract CAFItemsManager is
     function _calculateExpTime(
         uint256 _unit,
         uint256 _mfgTime,
-        uint256 _decayRatePerHour
+        uint256 _decayRatePerQuarterDay
     ) private pure returns (uint256) {
-        return _mfgTime + ((1 hours) * _unit) / _decayRatePerHour;
+        return _mfgTime + ((1 hours) * _unit) / _decayRatePerQuarterDay;
     }
 
     function _createProductItem(
         uint256 _companyId,
         ProductItem memory _productItem
     ) private onlyCompanyExists(_companyId) returns (uint256, address) {
-        Company memory _company = getCompanyItem(_companyId);
+        CompanyItem memory _company = getCompanyItem(_companyId);
         uint256 _productId = _nextItemId++;
 
         _productItems[_productId] = _productItem;
@@ -236,17 +236,16 @@ contract CAFItemsManager is
             _companyId,
             ProductItem({
                 productType: _productType,
-                price: 0,
                 energy: _productEconomy.energy,
                 durability: _productEconomy.durability,
-                decayRatePerHour: _productEconomy.decayRatePerHour,
+                decayRatePerQuarterDay: _productEconomy.decayRatePerQuarterDay,
                 mfgTime: block.timestamp,
                 expTime: _calculateExpTime(
                     _unit,
                     block.timestamp,
-                    _productEconomy.decayRatePerHour
+                    _productEconomy.decayRatePerQuarterDay
                 ),
-                lastDecayedTime: block.timestamp
+                lastDecayTime: block.timestamp
             })
         );
 
@@ -261,12 +260,12 @@ contract CAFItemsManager is
     ) internal returns (uint256) {
         require(
             _role != ItemLibrary.CompanyType.UNKNOWN,
-            "CAFItemsManager: Company role must be a valid role"
+            "CAFItemsManager: CompanyItem role must be a valid role"
         );
 
         require(
             _owner != address(0),
-            "CAFItemsManager: Company owner cannot be the zero address"
+            "CAFItemsManager: CompanyItem owner cannot be the zero address"
         );
 
         require(
@@ -278,12 +277,12 @@ contract CAFItemsManager is
 
         require(
             _ownerOwnedCompany[_owner] == 0,
-            "CAFItemsManager: Company already exists for this owner"
+            "CAFItemsManager: CompanyItem already exists for this owner"
         );
 
         uint256 _companyId = _nextItemId++;
 
-        _companyItems[_companyId] = Company({
+        _companyItems[_companyId] = CompanyItem({
             owner: _owner,
             role: _role,
             energy: 100
@@ -357,17 +356,17 @@ contract CAFItemsManager is
                 _ownerOwnedCompany[address(this)],
                 ProductItem({
                     productType: _productType,
-                    price: 0,
                     energy: _productEconomy.energy,
                     durability: _productEconomy.durability,
-                    decayRatePerHour: _productEconomy.decayRatePerHour,
+                    decayRatePerQuarterDay: _productEconomy
+                        .decayRatePerQuarterDay,
                     mfgTime: block.timestamp,
                     expTime: _calculateExpTime(
                         _productEconomy.energy,
                         block.timestamp,
-                        _productEconomy.decayRatePerHour
+                        _productEconomy.decayRatePerQuarterDay
                     ),
-                    lastDecayedTime: block.timestamp
+                    lastDecayTime: block.timestamp
                 })
             );
 
@@ -413,7 +412,7 @@ contract CAFItemsManager is
 
     function getCompanyItem(
         uint256 _companyId
-    ) public view override returns (Company memory) {
+    ) public view override returns (CompanyItem memory) {
         return _companyItems[_companyId];
     }
 
@@ -522,7 +521,7 @@ contract CAFItemsManager is
         uint256[] memory _componentIds
     ) external override returns (uint256) {
         ProductRecipe memory _productRecipe = _productRecipes[_productType];
-        Company memory _company = getCompanyItem(
+        CompanyItem memory _company = getCompanyItem(
             _ownerOwnedCompany[msg.sender]
         );
 
@@ -552,7 +551,7 @@ contract CAFItemsManager is
                             .MANUFACTURE
                     )
                     .fee,
-            "CAFItemsManager: Company does not have enough energy"
+            "CAFItemsManager: CompanyItem does not have enough energy"
         );
 
         uint8 _enoughComponents = 0;
@@ -590,17 +589,16 @@ contract CAFItemsManager is
             _ownerOwnedCompany[msg.sender],
             ProductItem({
                 productType: _productType,
-                price: 0,
                 energy: _energy,
                 durability: _durability,
-                decayRatePerHour: _productEconomy.decayRatePerHour,
+                decayRatePerQuarterDay: _productEconomy.decayRatePerQuarterDay,
                 mfgTime: block.timestamp,
                 expTime: _calculateExpTime(
                     _energy,
                     block.timestamp,
-                    _productEconomy.decayRatePerHour
+                    _productEconomy.decayRatePerQuarterDay
                 ),
-                lastDecayedTime: block.timestamp
+                lastDecayTime: block.timestamp
             })
         );
 
@@ -623,7 +621,7 @@ contract CAFItemsManager is
         uint256 _companyId,
         uint256 _itemId
     ) external override onlyCompanyOwner(_companyId) {
-        Company storage _company = _companyItems[_companyId];
+        CompanyItem storage _company = _companyItems[_companyId];
         ProductItem storage _productItem = _productItems[_itemId];
 
         require(
@@ -656,7 +654,7 @@ contract CAFItemsManager is
             "CAFItemsManager: caller is not the system, admin or company owner"
         );
 
-        Company storage _company = _companyItems[_companyId];
+        CompanyItem storage _company = _companyItems[_companyId];
 
         require(
             _company.energy >= _amount,
@@ -715,18 +713,18 @@ contract CAFItemsManager is
             return 0;
         }
 
-        if (block.timestamp < _productItem.lastDecayedTime + 1 hours) {
+        if (block.timestamp < _productItem.lastDecayTime + 6 hours) {
             return 0;
         }
 
-        uint256 _decayRatePerHour = _gameEconomy
+        uint256 _decayRatePerQuarterDay = _gameEconomy
             .getProductEconomy(_productItem.productType)
-            .decayRatePerHour;
+            .decayRatePerQuarterDay;
 
-        uint256 _deltaT = (block.timestamp - _productItem.lastDecayedTime) /
+        uint256 _deltaT = (block.timestamp - _productItem.lastDecayTime) /
             1 hours;
 
-        uint256 _rDecay = _decayRatePerHour;
+        uint256 _rDecay = _decayRatePerQuarterDay;
 
         uint256 _decayAmount = _rDecay * _deltaT;
 
@@ -737,7 +735,7 @@ contract CAFItemsManager is
             ? uint8(_productItem.durability - _decayAmount)
             : 0;
 
-        _productItem.lastDecayedTime = block.timestamp;
+        _productItem.lastDecayTime = block.timestamp;
 
         return _decayAmount;
     }
@@ -769,5 +767,11 @@ contract CAFItemsManager is
         }
 
         _lastProducedTime = block.timestamp;
+    }
+
+    function autoDecayAll() external override onlyHasAccess {
+        for (uint256 i = 0; i < _allProductItemIds.length; i++) {
+            decay(_allProductItemIds[i]);
+        }
     }
 }

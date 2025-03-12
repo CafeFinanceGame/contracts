@@ -15,13 +15,12 @@ interface ICAFProductItems is
 
     struct ProductItem {
         ItemLibrary.ProductItemType productType;
-        uint256 price;
         uint8 energy; // Energy of the item, only for consumable products
         uint8 durability; // Durability of the item, only for machine products
-        uint256 decayRatePerHour; // Decay rate per hour of the item (in amount)
+        uint256 decayRatePerQuarterDay; // Decay rate per hour of the item (in amount)
         uint256 mfgTime; // Manufactured time of the item
         uint256 expTime; // Expiration time of the item
-        uint256 lastDecayedTime;
+        uint256 lastDecayTime; // Last decayed time of the item
     }
 
     struct ProductItemInfo {

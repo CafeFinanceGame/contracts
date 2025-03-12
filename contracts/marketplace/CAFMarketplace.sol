@@ -258,7 +258,7 @@ contract CAFMarketplace is
         _cafGameManager.transferToken(msg.sender, _price);
 
         uint8 _activityFee = _gameEconomy
-            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.SELL)
+            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.RESELL)
             .fee;
 
         _itemsManager.useEnergy(

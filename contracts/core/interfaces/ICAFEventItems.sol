@@ -37,10 +37,17 @@ interface ICAFEventItems {
 
     /// @notice Get all active event ids
     /// @return All active event ids
-    function getAllActiveEventItemIds() external view returns (uint256[] memory);
-    
+    function getAllActiveEventItemIds()
+        external
+        view
+        returns (uint256[] memory);
+
+    /// @notice Start the event
+    /// @param _eventId The event id
     function startEvent(uint256 _eventId) external;
 
+    /// @notice End the event
+    /// @param _eventId The event id
     function endEvent(uint256 _eventId) external;
 
     // ========================== EVENTS ==========================

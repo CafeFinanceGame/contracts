@@ -6,7 +6,7 @@ import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 interface ICAFCompanyItems {
     // ========================== TYPES ============================
 
-    struct Company {
+    struct CompanyItem {
         address owner;
         ItemLibrary.CompanyType role;
         uint8 energy;
@@ -26,7 +26,7 @@ interface ICAFCompanyItems {
     /// @return The company's information
     function getCompanyItem(
         uint256 _companyId
-    ) external view returns (Company memory);
+    ) external view returns (CompanyItem memory);
 
     /// @notice Get the company's id by owner
     /// @param _owner The owner of the company

@@ -4,17 +4,19 @@ pragma solidity ^0.8.20;
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
 interface ICAFGameEconomy {
+    // ========================== TYPES ==========================
+
     struct ProductEconomy {
         uint8 energy;
         uint8 durability;
-        uint8 decayRatePerHour;
+        uint8 decayRatePerQuarterDay;
         uint256 costPrice;
     }
 
     enum CompanyAcitivityEnergyFeeType {
         MANUFACTURE,
         BUY,
-        SELL,
+        RESELL,
         LIST,
         UNLIST,
         UPDATE

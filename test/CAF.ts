@@ -152,7 +152,7 @@ describe("All tests", function () {
                 expect(productItem.productType).to.equal(1);
                 expect(productItem.energy).to.equal(productEconomy.energy);
                 expect(productItem.durability).to.equal(productEconomy.durability);
-                expect(productItem.decayRatePerHour).to.equal(productEconomy.decayRatePerHour);
+                expect(productItem.decayRatePerQuarterDay).to.equal(productEconomy.decayRatePerQuarterDay);
 
                 const allProductItemsOfOwner = await cafItemsManager.getAllProductItemByOwner(owner.address);
 
@@ -179,7 +179,7 @@ describe("All tests", function () {
                     expect(productItem.productType).to.equal(productType);
                     expect(productItem.energy).to.equal(productEconomy.energy);
                     expect(productItem.durability).to.equal(productEconomy.durability);
-                    expect(productItem.decayRatePerHour).to.equal(productEconomy.decayRatePerHour);
+                    expect(productItem.decayRatePerQuarterDay).to.equal(productEconomy.decayRatePerQuarterDay);
                 }
 
                 // try create product with createProductItem after produceProducts
@@ -221,7 +221,7 @@ describe("All tests", function () {
                 let durabilityBefore = machine.durability;
                 let expTime = machine.expTime;
 
-                await time.increase(3600);
+                await time.increase(3600 * 6) // increase period to each 6 hours
 
                 await cafItemsManager.decay(coffeeBeanId);
                 await cafItemsManager.decay(machineId);
