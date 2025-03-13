@@ -330,10 +330,10 @@ contract CAFItemsManager is
 
     function produceProducts(
         ItemLibrary.ProductItemType _productType,
-        uint256 _rateProducedPerHour // The rate produced per hour
+        uint256 _ratePerQuarterDay // The rate produced per hour
     ) public override onlyHasAccess {
         require(
-            _rateProducedPerHour > 0,
+            _ratePerQuarterDay > 0,
             "CAFItemsManager: rate produced per hour must be greater than zero"
         );
         require(
@@ -342,8 +342,8 @@ contract CAFItemsManager is
         );
 
         uint256 _deltaT = block.timestamp - _lastProducedTime;
-        uint256 _quantityProduced = (_deltaT * _rateProducedPerHour) /
-            (1 hours);
+        uint256 _quantityProduced = (_deltaT * _ratePerQuarterDay) /
+            (1 days / 4);
 
         ICAFGameEconomy.ProductEconomy memory _productEconomy = _gameEconomy
             .getProductEconomy(_productType);
@@ -713,7 +713,7 @@ contract CAFItemsManager is
             return 0;
         }
 
-        if (block.timestamp < _productItem.lastDecayTime + 6 hours) {
+        if (block.timestamp < _productItem.lastDecayTime + 1 days / 4) {
             return 0;
         }
 
@@ -742,8 +742,8 @@ contract CAFItemsManager is
 
     function autoProduceProducts() external override onlyHasAccess {
         require(
-            _lastProducedTime + 1 hours <= block.timestamp,
-            "CAFItemsManager: Products are already being produced"
+            _lastProducedTime + (1 days / 4) <= block.timestamp,
+            "CAFItemsManager: Products are already being produced or not ready for productions"
         );
 
         ItemLibrary.ProductItemType[]
@@ -758,7 +758,7 @@ contract CAFItemsManager is
                 memory _manufacturedProductEconomy = _gameEconomy
                     .getManufacturedProduct(_productTypes[i]);
             uint256 _economyRate = _manufacturedProductEconomy
-                .manufacturedPerHour;
+                .manufacturedPerQuarterDay;
 
             produceProducts(
                 ItemLibrary.ProductItemType(_productTypes[i]),

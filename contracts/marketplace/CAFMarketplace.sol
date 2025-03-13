@@ -124,12 +124,12 @@ contract CAFMarketplace is
         emit ItemBought(_itemId, msg.sender, item.owner, item.price);
     }
 
-    function _list(uint256 _itemId, uint256 _price) internal {
+    function _list(uint256 _itemId, address _owner, uint256 _price) internal {
         require(_price > 0, "CAFMarketplace: price must be greater than zero");
 
         _listedItems[_itemId] = ListedItem({
             id: _itemId,
-            owner: msg.sender,
+            owner: _owner,
             price: _price
         });
 
@@ -150,7 +150,7 @@ contract CAFMarketplace is
         onlyNotListed(_itemId)
     {
         _itemsManager.decay(_itemId);
-        _list(_itemId, _price);
+        _list(_itemId, msg.sender, _price);
         uint8 _activityFee = _gameEconomy
             .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.BUY)
             .fee;
@@ -258,7 +258,9 @@ contract CAFMarketplace is
         _cafGameManager.transferToken(msg.sender, _price);
 
         uint8 _activityFee = _gameEconomy
-            .getActivityFee(ICAFGameEconomy.CompanyAcitivityEnergyFeeType.RESELL)
+            .getActivityFee(
+                ICAFGameEconomy.CompanyAcitivityEnergyFeeType.RESELL
+            )
             .fee;
 
         _itemsManager.useEnergy(
@@ -305,7 +307,7 @@ contract CAFMarketplace is
 
     function autoList() external override {
         require(
-            block.timestamp - _lastAutoListed >= 1 hours,
+            block.timestamp >= _lastAutoListed + (1 days / 4),
             "CAFMarketplace: auto list is not available"
         );
 
@@ -320,7 +322,7 @@ contract CAFMarketplace is
 
             uint256 _price = _itemEconomy.costPrice;
 
-            _list(_listedItemId, _price);
+            _list(_listedItemId, address(_itemsManager), _price);
 
             _listedItemId = _itemsManager.popNotListedItem();
 

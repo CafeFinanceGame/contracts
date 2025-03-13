@@ -163,14 +163,14 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
 
     function updateManufacturedProduct(
         ItemLibrary.ProductItemType _productType,
-        uint256 _manufacturedPerHour
+        uint256 _manufacturedPerQuarterDay
     ) external override onlyRole(ADMIN_ROLE) returns (bool) {
         require(
-            _manufacturedProducts[_productType].manufacturedPerHour > 0,
+            _manufacturedProducts[_productType].manufacturedPerQuarterDay > 0,
             "Product does not exist"
         );
         _manufacturedProducts[_productType] = ManufacturedProduct(
-            _manufacturedPerHour
+            _manufacturedPerQuarterDay
         );
         return true;
     }

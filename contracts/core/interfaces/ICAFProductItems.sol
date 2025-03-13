@@ -23,14 +23,6 @@ interface ICAFProductItems is
         uint256 lastDecayTime; // Last decayed time of the item
     }
 
-    struct ProductItemInfo {
-        ItemLibrary.ProductItemType productType;
-        uint8 energy;
-        uint8 durability;
-        uint8 decayRate;
-        uint256 decayPeriod;
-    }
-
     struct RawMaterialProductItemInfo {
         ItemLibrary.ProductItemType productType;
         uint256 costPrice;

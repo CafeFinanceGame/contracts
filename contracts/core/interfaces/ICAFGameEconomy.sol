@@ -28,7 +28,7 @@ interface ICAFGameEconomy {
     }
 
     struct ManufacturedProduct {
-        uint256 manufacturedPerHour;
+        uint256 manufacturedPerQuarterDay;
     }
 
     // ========================== ACTIONS ==========================
@@ -67,11 +67,11 @@ interface ICAFGameEconomy {
 
     /// @notice Update the manufactured product
     /// @param _productType The type of the manufactured product
-    /// @param _manufacturedPerHour The manufactured product per hour
+    /// @param _manufacturedPerQuarterDay The manufactured product per hour
     /// @return True if the manufactured product is updated
     function updateManufacturedProduct(
         ItemLibrary.ProductItemType _productType,
-        uint256 _manufacturedPerHour
+        uint256 _manufacturedPerQuarterDay
     ) external returns (bool);
 
     /// @notice Get the manufactured product

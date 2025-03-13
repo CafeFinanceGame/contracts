@@ -2,8 +2,8 @@ import {
     time,
     loadFixture,
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
+
 import hre from "hardhat";
 
 enum CompanyType {
@@ -163,7 +163,7 @@ describe("All tests", function () {
             it("Should produce batch products items for contract manager", async function () {
                 const { cafItemsManager, owner, cafGameEconomy } = await loadFixture(deployCAFFixture);
 
-                await time.increase(3600 + 1);
+                await time.increase(3600 * 6);
 
                 const productType = ProductItemType.WATER;
                 const produceRatePerHour = 10;
@@ -221,7 +221,7 @@ describe("All tests", function () {
                 let durabilityBefore = machine.durability;
                 let expTime = machine.expTime;
 
-                await time.increase(3600 * 6) // increase period to each 6 hours
+                await time.increase(3600 * 6) // increase period to each 1 days / 4
 
                 await cafItemsManager.decay(coffeeBeanId);
                 await cafItemsManager.decay(machineId);
@@ -336,11 +336,11 @@ describe("All tests", function () {
                 const waterEconomy = await cafGameEconomy.getManufacturedProduct(ProductItemType.WATER);
                 const machineMaterialEconomy = await cafGameEconomy.getManufacturedProduct(ProductItemType.MACHINE_MATERIAL);
 
-                const timePassed = 3600 * 2;
+                const timePassed = 3600 * 6;
                 await time.increase(timePassed);
 
                 await cafItemsManager.autoProduceProducts();
-                const expectedQuantity = Number(coffeeBeanEconomy[0]) * timePassed / 3600 + Number(waterEconomy[0]) * timePassed / 3600 + Number(machineMaterialEconomy[0]) * timePassed / 3600;
+                const expectedQuantity = Number(coffeeBeanEconomy[0]) + Number(waterEconomy[0]) + Number(machineMaterialEconomy[0]);
 
                 const productItems = await cafItemsManager.getAllProductItemIds();
                 expect(productItems.length).to.equal(expectedQuantity);
@@ -522,19 +522,26 @@ describe("All tests", function () {
         });
         describe("Auto", function () {
             it("Should auto list an item", async function () {
-                const { cafMarketplace, cafItemsManager } = await loadFixture(deployCAFFixture);
+                const { cafMarketplace, cafItemsManager, owner } = await loadFixture(deployCAFFixture);
 
-                const produceRatePerHour = 3;
+                const produceRatePerQuarterDay = 3;
                 const productType = ProductItemType.COFFEE_BEAN;
 
-                await time.increase(3600 * 2);
+                await time.increase(3600 * 6);
 
-                await cafItemsManager.produceProducts(productType, produceRatePerHour);
+                await cafItemsManager.produceProducts(productType, produceRatePerQuarterDay);
 
                 await cafMarketplace.autoList();
 
                 const listedItemIds = await cafMarketplace.getAllListedItemIds();
-                expect(listedItemIds.length).to.equal(produceRatePerHour * 2);
+                expect(listedItemIds.length).to.equal(produceRatePerQuarterDay);
+
+                // check owner listed item still be owned by contract items mangaer
+                console.log("Owner", owner.address)
+                for (let i = 0; i < produceRatePerQuarterDay; i++) {
+                    const listedItem = await cafMarketplace.getListedItem(listedItemIds[i]);
+                    expect(listedItem.owner).equal(await cafItemsManager.getAddress())
+                }
             });
         });
     });
