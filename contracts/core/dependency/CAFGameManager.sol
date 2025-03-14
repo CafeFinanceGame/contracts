@@ -9,11 +9,6 @@ import {ICAFMaterialFactory} from "../interfaces/ICAFMaterialFactory.sol";
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
 contract CAFGameManager is ICAFGameManager, CAFAccessControl {
-    /*
-    ============================ 🌍 GAME STORY: GAME Manager ============================
-    - The game manager is the core of the game, it will manage all the game logic and rules
-    */
-
     CAFToken private _cafToken;
     ICAFMaterialFactory private _materialFactory;
 

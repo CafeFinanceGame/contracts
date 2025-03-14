@@ -6,8 +6,6 @@ import {ICAFGameEconomy} from "../interfaces/ICAFGameEconomy.sol";
 import {ItemLibrary} from "../libraries/ItemLibrary.sol";
 
 contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
-    uint256 public constant INITIAL_INACTIVE_MATERIAL_PRODUCT_SUPPLY = 10e4;
-
     mapping(ItemLibrary.ProductItemType => ProductEconomy) private _products;
     mapping(ItemLibrary.ProductItemType => ManufacturedProduct)
         private _manufacturedProducts;
@@ -53,12 +51,9 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
             40
         );
 
-        _products[ItemLibrary.ProductItemType.MACHINE_MATERIAL] = ProductEconomy(
-            0,
-            100,
-            1,
-            50
-        );
+        _products[
+            ItemLibrary.ProductItemType.MACHINE_MATERIAL
+        ] = ProductEconomy(0, 100, 1, 50);
 
         _manufacturedProducts[
             ItemLibrary.ProductItemType.COFFEE_BEAN
@@ -70,10 +65,9 @@ contract CAFGameEconomy is ICAFGameEconomy, CAFAccessControl {
             ItemLibrary.ProductItemType.MACHINE_MATERIAL
         ] = ManufacturedProduct(1);
 
-        _activityFees[CompanyAcitivityEnergyFeeType.MANUFACTURE] = ActivityEnergyFee(
-            CompanyAcitivityEnergyFeeType.MANUFACTURE,
-            5
-        );
+        _activityFees[
+            CompanyAcitivityEnergyFeeType.MANUFACTURE
+        ] = ActivityEnergyFee(CompanyAcitivityEnergyFeeType.MANUFACTURE, 5);
 
         _activityFees[CompanyAcitivityEnergyFeeType.BUY] = ActivityEnergyFee(
             CompanyAcitivityEnergyFeeType.BUY,

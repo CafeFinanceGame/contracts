@@ -278,7 +278,6 @@ describe("All tests", function () {
                 await time.increase(3600 * 2);
 
                 await cafItemsManager.manufacture(ProductItemType.COFFEE, [coffeeBeanId, waterId, kettleId]);
-
                 const coffeeId = (await cafItemsManager.getAllProductItemIds())[3];
                 const coffee = await cafItemsManager.getProductItem(coffeeId);
 

@@ -10,12 +10,10 @@ contract CAFContractRegistry is
     ICAFContractRegistry,
     CAFAccessControl
 {
-    // ======================== STATE ========================
     mapping(uint256 => address) private contracts;
 
     constructor() Ownable(msg.sender) CAFAccessControl(address(this)) {}
 
-    // ======================== ACTIONS ========================
     function getContractAddress(
         uint256 contractType
     ) external view override returns (address) {

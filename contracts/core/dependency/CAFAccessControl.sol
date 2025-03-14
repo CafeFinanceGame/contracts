@@ -35,6 +35,16 @@ abstract contract CAFAccessControl is AccessControl {
                 uint256(
                     ICAFContractRegistry
                         .ContractRegistryType
+                        .CAF_ITEMS_MANAGER_CONTRACT
+                )
+            )
+        );
+        _grantRole(
+            SYSTEM_ROLE,
+            _registry.getContractAddress(
+                uint256(
+                    ICAFContractRegistry
+                        .ContractRegistryType
                         .CAF_GAME_MANAGER_CONTRACT
                 )
             )
