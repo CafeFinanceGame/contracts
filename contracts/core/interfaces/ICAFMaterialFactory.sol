@@ -13,6 +13,10 @@ interface ICAFMaterialFactory {
         uint256 _rateProducedPerHour // The rate produced per hour
     ) external;
 
+    /// @notice Get the last auto produce time
+    /// @return The last auto produce time
+    function getLastAutoProduceProducts() external view returns (uint256);
+
     /// @notice Auto manufacture product, game center will call this function to manufacture product
     function autoProduceProducts() external;
 
@@ -21,4 +25,6 @@ interface ICAFMaterialFactory {
         ItemLibrary.ProductItemType _productType,
         uint256 _rateProducedPerHour
     );
+
+    event AllAutoProductsProduced(uint256 lastProduced);
 }

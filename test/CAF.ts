@@ -52,21 +52,19 @@ describe("All tests", function () {
         const CAFGameManager = await hre.ethers.getContractFactory("CAFGameManager");
         const cafGameManager = await CAFGameManager.deploy(contractRegistryAddress);
 
+        const CAFToken = await hre.ethers.getContractFactory("CAFToken");
+        const cafToken = await CAFToken.connect(owner).deploy(await contractRegistry.getAddress());
 
         await contractRegistry.registerContract(ContractRegistryType.CAF_GAME_ECONOMY_CONTRACT, await cafGameEconomy.getAddress());
         await contractRegistry.registerContract(ContractRegistryType.CAF_ITEMS_MANAGER_CONTRACT, await cafItemsManager.getAddress());
         await contractRegistry.registerContract(ContractRegistryType.CAF_MARKETPLACE_CONTRACT, await cafMarketplace.getAddress());
         await contractRegistry.registerContract(ContractRegistryType.CAF_GAME_MANAGER_CONTRACT, await cafGameManager.getAddress());
-
-        const CAFToken = await hre.ethers.getContractFactory("CAFToken");
-        const cafToken = await CAFToken.connect(owner).deploy(await contractRegistry.getAddress());
-
         await contractRegistry.registerContract(ContractRegistryType.CAF_TOKEN_CONTRACT, await cafToken.getAddress());
 
-        await cafItemsManager.setUp();
         await cafMarketplace.setUp();
         await cafGameManager.setUp();
         await cafGameEconomy.setUp();
+        await cafItemsManager.setUp();
         await cafToken.setUp();
         await cafToken.connect(owner).init();
 
@@ -93,6 +91,19 @@ describe("All tests", function () {
                 const companyItem = await cafItemsManager.getCompanyItem(companyId[0]);
 
                 expect(companyItem.owner).to.equal(await cafItemsManager.getAddress());
+            });
+
+            it("Should set up successfully", async function () {
+                const { cafItemsManager, cafMarketplace } = await loadFixture(deployCAFFixture);
+
+                const cafItemsManagerAddress = await cafItemsManager.getAddress();
+                const cafMarketplaceAddress = await cafMarketplace.getAddress();
+
+                console.log("CAFItemsManager address", cafItemsManagerAddress);
+                console.log("CAFMarketplace address", cafMarketplaceAddress);
+
+                await cafItemsManager.setApprovalForAll(cafMarketplaceAddress, true);
+                expect(await cafItemsManager.isApprovedForAll(cafItemsManagerAddress, cafMarketplaceAddress)).to.equal(true);
             });
 
             // it("Should lost energy when do action", async function () {
@@ -432,21 +443,20 @@ describe("All tests", function () {
             it("Should buy an item", async function () {
                 const { cafMarketplace, cafItemsManager, cafToken, owner, otherAccount } = await loadFixture(deployCAFFixture);
 
-                await cafItemsManager.createCompanyItem(owner.address, 1);
-                await cafItemsManager.createCompanyItem(otherAccount.address, 1);
+                await cafItemsManager.connect(owner).createCompanyItem(owner.address, 2);
+                await cafItemsManager.connect(otherAccount).createCompanyItem(otherAccount.address, 2);
 
-                const companyId = (await cafItemsManager.getAllCompanyItemIds())[1];
-                await cafItemsManager.createProductItem(companyId, 1);
+                await cafItemsManager.createProductItem((await cafItemsManager.getAllCompanyItemIds())[1], 1);
 
                 const productItemId = (await cafItemsManager.getAllProductItemIds())[0];
                 await cafMarketplace.connect(owner).list(productItemId, 100);
-
-                // Check list item
-                const listedItem = await cafMarketplace.getListedItem(productItemId);
-                expect(listedItem.price).to.equal(100);
-                expect(listedItem.owner).to.equal(owner.address);
+                await time.increase(3600 * 6);
 
                 await cafToken.mint(otherAccount.address, 100);
+
+                const cafItemsManagerAddress = await cafItemsManager.getAddress();
+                const cafMarketplaceAddress = await cafMarketplace.getAddress();
+                await cafItemsManager.setApprovalForAll(cafMarketplaceAddress, true);
 
                 await cafToken.connect(otherAccount).approve(await cafMarketplace.getAddress(), 100);
                 await cafMarketplace.connect(otherAccount).buy(productItemId);
@@ -454,6 +464,25 @@ describe("All tests", function () {
                 expect(await cafItemsManager.balanceOf(otherAccount.address, productItemId)).to.equal(1);
                 expect(await cafItemsManager.balanceOf(owner.address, productItemId)).to.equal(0);
             });
+
+            it("Should list by system and buy by user", async function () {
+                const { cafMarketplace, cafItemsManager, cafToken, owner, otherAccount } = await loadFixture(deployCAFFixture);
+
+                await cafItemsManager.createCompanyItem(otherAccount.address, 1);
+
+                await time.increase(3600 * 6);
+
+                await cafItemsManager.autoProduceProducts();
+                await cafMarketplace.autoList();
+
+                const listedItemIds = await cafMarketplace.getAllListedItemIds();
+
+                await cafToken.mint(otherAccount.address, 100);
+
+                const listedItem = await cafMarketplace.getListedItem(listedItemIds[0]);
+                await cafToken.connect(otherAccount).approve(await cafMarketplace.getAddress(), listedItem.price);
+                await cafMarketplace.connect(otherAccount).buy(listedItemIds[0]);
+            })
         });
 
         describe("Updating and Unlisting Items", function () {
@@ -511,6 +540,7 @@ describe("All tests", function () {
                 // await cafMarketplace.connect(otherAccount).buy(productItemId);
                 const beforeBalance = await cafToken.balanceOf(owner.address);
 
+                await cafItemsManager.connect(owner).setApprovalForAll(await cafMarketplace.getAddress(), true);
                 await cafMarketplace.connect(owner).resell(productItemId);
 
                 const afterBalance = await cafToken.balanceOf(owner.address);

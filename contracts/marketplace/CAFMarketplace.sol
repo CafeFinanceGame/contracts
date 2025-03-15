@@ -332,6 +332,8 @@ contract CAFMarketplace is
         }
 
         _lastAutoListed = block.timestamp;
+
+        emit AllAutoListed(_lastAutoListed);
     }
 
     function getAllListedItemIds()
@@ -347,5 +349,9 @@ contract CAFMarketplace is
         uint256 _itemId
     ) external view override returns (ListedItem memory) {
         return _listedItems[_itemId];
+    }
+
+    function getLastAutoListTime() external view override returns (uint256) {
+        return _lastAutoListed;
     }
 }

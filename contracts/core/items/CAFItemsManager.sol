@@ -28,6 +28,7 @@ contract CAFItemsManager is
 
     uint256 private _nextItemId = 1;
     uint256 private _lastProducedTime = block.timestamp;
+    uint256 private _lastDecayTime = block.timestamp;
 
     mapping(uint256 => address) private _itemOwners;
     mapping(uint256 => ProductItem) private _productItems;
@@ -182,7 +183,8 @@ contract CAFItemsManager is
             )
         );
 
-        setApprovalForAll(
+        _setApprovalForAll(
+            address(this),
             _registry.getContractAddress(
                 uint256(
                     ICAFContractRegistry
@@ -295,7 +297,7 @@ contract CAFItemsManager is
 
         _mint(_owner, _companyId, 1, "");
 
-        emit CompanyItemCreated(_nextItemId, _owner);
+        emit CompanyItemCreated(_companyId, _owner);
 
         return _companyId;
     }
@@ -767,11 +769,30 @@ contract CAFItemsManager is
         }
 
         _lastProducedTime = block.timestamp;
+
+        emit AllAutoProductsProduced(_lastProducedTime);
     }
 
     function autoDecayAll() external override onlyHasAccess {
         for (uint256 i = 0; i < _allProductItemIds.length; i++) {
             decay(_allProductItemIds[i]);
         }
+
+        _lastDecayTime = block.timestamp;
+
+        emit AllItemsDecayed(_lastDecayTime);
+    }
+
+    function getLastAutoProduceProducts()
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _lastProducedTime;
+    }
+
+    function getLastAutoDecayTime() external view override returns (uint256) {
+        return _lastDecayTime;
     }
 }

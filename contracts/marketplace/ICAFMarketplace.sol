@@ -39,6 +39,10 @@ interface ICAFMarketplace {
         uint256 _itemId
     ) external view returns (ListedItem memory);
 
+    /// @notice Get the last auto list time
+    /// @return The last auto list time
+    function getLastAutoListTime() external view returns (uint256);
+
     // @notice Auto list per hour
     function autoList() external;
 
@@ -61,4 +65,5 @@ interface ICAFMarketplace {
         address indexed _owner,
         uint256 _price
     );
+    event AllAutoListed(uint256 lastListed);
 }
